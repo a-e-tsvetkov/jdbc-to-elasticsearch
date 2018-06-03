@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.gmail.a.e.tsvetkov</groupId>
+        <artifactId>sql-to-nosql</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>test-client</artifactId>
+
+    <packaging>jar</packaging>
+    <name>test_client</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.gmail.a.e.tsvetkov</groupId>
+            <artifactId>driver</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+<!--
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.11</version>
+        </dependency>
+-->
+    </dependencies>
+
+</project>
