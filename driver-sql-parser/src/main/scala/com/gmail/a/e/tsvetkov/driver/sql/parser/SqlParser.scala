@@ -144,7 +144,7 @@ private object SqlParserInt extends Parsers {
 
   lazy val commonValueExpression: Parser[ValueExpression] =
     numericValueExpression |
-      //    stringValueExpression |
+      stringValueExpression |
       //    datetimeValueExpression |
       //    intervalValueExpression |
       //    userDefinedTypeValueExpression |
@@ -153,26 +153,49 @@ private object SqlParserInt extends Parsers {
       failure("unknown commonValueExpression")
 
   //6.26
-  lazy val numericValueExpression: Parser[NumericExpression] =
+  lazy val numericValueExpression: Parser[ValueExpression] =
     term |
       numericValueExpression ~ OP_PLUS ~ term ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionPlus, l, r) } |
       numericValueExpression ~ OP_MINUS ~ term ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionMinus, l, r) }
 
-  lazy val term: Parser[NumericExpression] =
+  lazy val term: Parser[ValueExpression] =
     factor |
       term ~ OP_MUL ~ factor ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionMult, l, r) } |
       term ~ OP_DIV ~ factor ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionDiv, l, r) }
 
-  lazy val factor: Parser[NumericExpression] = opt(sign) ~ numericPrimary ^^ {
+  lazy val factor = opt(sign) ~ numericPrimary ^^ {
     case s ~ v => s
       .map(_ => NumericExpressionUnaryMinus(v))
       .getOrElse(v)
   }
 
   lazy val numericPrimary =
-    valueExpressionPrimary ^^ NumericExpressionFromValue
+    valueExpressionPrimary
   /*|
        numericValueFunction */
+
+  //6.28
+  lazy val stringValueExpression: Parser[ValueExpression] =
+    characterValueExpression | blobValueExpression
+  lazy val characterValueExpression: Parser[ValueExpression] =
+    concatenation | characterFactor
+  lazy val concatenation = characterValueExpression ~ OP_CONCAT ~ characterFactor ^^ {
+    case l ~ _ ~ r => StringExpressionBinary(StringOperarionConcat, l, r)
+  }
+  lazy val characterFactor = characterPrimary <~ opt(collateClause)
+  lazy val characterPrimary = valueExpressionPrimary | stringValueFunction
+  lazy val blobValueExpression: Parser[ValueExpression] =
+    blobConcatenation | blobFactor
+  lazy val blobFactor = blobPrimary
+  lazy val blobPrimary = valueExpressionPrimary | stringValueFunction
+  lazy val blobConcatenation = blobValueExpression ~ OP_CONCAT ~ blobFactor ^^ {
+    case l ~ _ ~ r => StringExpressionBinary(StringOperarionConcat, l, r)
+  }
+
+
+  //6.29
+  lazy val stringValueFunction: Parser[ValueExpression] = //  <character value function> | <blob value function>
+    failure("not implemented stringValueFunction")
 
   //6.34
   lazy val booleanValueExpression: Parser[BooleanExpression] =

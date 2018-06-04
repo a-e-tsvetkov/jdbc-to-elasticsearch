@@ -28,6 +28,8 @@ object SqlToken {
 
   case object OP_GE extends SqlToken
 
+  case object OP_CONCAT extends SqlToken
+
   case object PERIOD extends SqlToken
 
   case object COMMA extends SqlToken

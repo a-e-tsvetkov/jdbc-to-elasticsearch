@@ -22,13 +22,14 @@ object SqlLexerInt extends RegexParsers {
     "+" ^^ (_ => OP_PLUS) |
       "-" ^^ (_ => OP_MINUS) |
       "*" ^^ (_ => OP_MUL) |
-      "/" ^^ (_ => OP_DIV)
-  "=" ^^ (_ => OP_EQ) |
-    "<>" ^^ (_ => OP_NE) |
-    "<" ^^ (_ => OP_LT) |
-    ">" ^^ (_ => OP_GT) |
-    "<=" ^^ (_ => OP_LE) |
-    ">=" ^^ (_ => OP_GE)
+      "/" ^^ (_ => OP_DIV) |
+      "=" ^^ (_ => OP_EQ) |
+      "<>" ^^ (_ => OP_NE) |
+      "<" ^^ (_ => OP_LT) |
+      ">" ^^ (_ => OP_GT) |
+      "<=" ^^ (_ => OP_LE) |
+      ">=" ^^ (_ => OP_GE) |
+      "||" ^^ (_ => OP_CONCAT)
 
 
   val bracket =
