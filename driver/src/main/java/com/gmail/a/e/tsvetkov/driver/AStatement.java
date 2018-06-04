@@ -16,7 +16,8 @@ public class AStatement implements Statement {
     }
 
     @Override
-    public int executeUpdate(String sql) {
+    public int executeUpdate(String sql) throws SQLException {
+        BResultSet result = link.execute(sql);
         return 0;
     }
 

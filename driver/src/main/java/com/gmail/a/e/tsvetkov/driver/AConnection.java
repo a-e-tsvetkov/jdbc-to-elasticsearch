@@ -9,7 +9,7 @@ public class AConnection implements Connection {
     private final BConnectionLink link;
 
     public AConnection(String host) {
-        this.link = new BConnectionLink();
+        this.link = BConnectionLink.connect(host);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class AConnection implements Connection {
 
     @Override
     public void close() {
-
+        link.close();
     }
 
     @Override

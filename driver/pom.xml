@@ -23,6 +23,11 @@
         </dependency>
         <dependency>
             <groupId>com.gmail.a.e.tsvetkov</groupId>
+            <artifactId>driver-sql-executor</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gmail.a.e.tsvetkov</groupId>
             <artifactId>driver-sql-parser</artifactId>
             <version>${project.version}</version>
         </dependency>
