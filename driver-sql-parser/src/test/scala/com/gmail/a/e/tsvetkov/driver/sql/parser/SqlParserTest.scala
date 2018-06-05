@@ -47,7 +47,14 @@ class SqlParserTest extends FunSuite {
     val statement = result.asInstanceOf[SqlParseResultSuccess].statement
     assert(statement.isInstanceOf[SqlInsertStatement])
     statement match {
-      case s: SqlInsertStatement =>
+      case SqlInsertStatement(t, c, s) =>
+        assert(t == "t1")
+        assert(c.isDefined)
+        assert(c.get == Seq("f1", "f2"))
+        assert(s == Seq(
+          Seq(
+            NumericExpressionConstant("1"),
+            NumericExpressionConstant("2"))))
     }
   }
 }
