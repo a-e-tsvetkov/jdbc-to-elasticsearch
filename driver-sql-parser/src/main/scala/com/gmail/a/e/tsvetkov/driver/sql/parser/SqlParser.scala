@@ -156,11 +156,11 @@ private object SqlParserInt extends Parsers {
   lazy val commonValueExpression: Parser[ValueExpression] =
     numericValueExpression |
       stringValueExpression
-      //    datetimeValueExpression |
-      //    intervalValueExpression |
-      //    userDefinedTypeValueExpression |
-      //    referenceValueExpression |
-      //    collectionValueExpression |
+  //    datetimeValueExpression |
+  //    intervalValueExpression |
+  //    userDefinedTypeValueExpression |
+  //    referenceValueExpression |
+  //    collectionValueExpression |
 
   //6.26
   lazy val numericValueExpression: Parser[ValueExpression] =
@@ -208,16 +208,16 @@ private object SqlParserInt extends Parsers {
     err("not implemented stringValueFunction")
 
   //6.34
-  lazy val booleanValueExpression: Parser[BooleanExpression] =
-    rep1sep(booleanTerm, OR) ^^ { ts => fold1Left[BooleanExpression](ts, (l, r) => BooleanExpressionBinary(BooleanOperarionOr, l, r)) }
+  lazy val booleanValueExpression =
+    rep1sep(booleanTerm, OR) ^^ { ts => fold1Left[ValueExpression](ts, (l, r) => BooleanExpressionBinary(BooleanOperarionOr, l, r)) }
 
   lazy val booleanTerm =
-    rep1sep(booleanFactor, AND) ^^ { ts => fold1Left[BooleanExpression](ts, (l, r) => BooleanExpressionBinary(BooleanOperarionAnd, l, r)) }
+    rep1sep(booleanFactor, AND) ^^ { ts => fold1Left[ValueExpression](ts, (l, r) => BooleanExpressionBinary(BooleanOperarionAnd, l, r)) }
   lazy val booleanFactor = opt(NOT) ~ booleanTest ^^ { case n ~ e =>
     n.map(_ => BooleanExpressionNot(e))
       .getOrElse(e)
   }
-  lazy val booleanTest: Parser[BooleanExpression] = booleanPrimary ~ opt(IS ~> opt(NOT) ~ truthValue) ^^ { case e ~ is =>
+  lazy val booleanTest = booleanPrimary ~ opt(IS ~> opt(NOT) ~ truthValue) ^^ { case e ~ is =>
     is.map {
       case None ~ true => e
       case None ~ false => BooleanExpressionNot(e)
@@ -230,8 +230,9 @@ private object SqlParserInt extends Parsers {
   lazy val booleanPrimary = predicate | booleanPredicand
   lazy val booleanPredicand =
     parenthesizedBooleanValueExpression |
-      (nonparenthesizedValueExpressionPrimary ^^ BooleanExpressionFromValue)
-  lazy val parenthesizedBooleanValueExpression = BRACKET_LEFT ~> booleanValueExpression <~ BRACKET_RIGHT
+      nonparenthesizedValueExpressionPrimary
+  lazy val parenthesizedBooleanValueExpression: SqlParserInt.Parser[ValueExpression] =
+    BRACKET_LEFT ~> booleanValueExpression <~ BRACKET_RIGHT
 
 
   //7.1
@@ -244,10 +245,10 @@ private object SqlParserInt extends Parsers {
        explicitRowValueConstructor*/
 
 
-  lazy val contextuallyTypedRowValueConstructor =
+  lazy val contextuallyTypedRowValueConstructor: Parser[List[ValueExpression]] =
     BRACKET_LEFT ~> rep1sep(contextuallyTypedRowValueConstructorElement, COMMA) <~ BRACKET_RIGHT |
-      commonValueExpression |
-      booleanValueExpression |
+      //      commonValueExpression |
+      //      booleanValueExpression |
       //      contextuallyTypedValueSpecification|
       //  |     ROW <left paren> <contextually typed row value constructor element list> <right paren>
       failure("unknown contextuallyTypedRowValueConstructor")
@@ -267,11 +268,11 @@ private object SqlParserInt extends Parsers {
       rowValueConstructorPredicand
   lazy val rowValueSpecialCase = nonparenthesizedValueExpressionPrimary
   lazy val contextuallyTypedRowValueExpression =
-    rowValueSpecialCase |
+//    rowValueSpecialCase |
       contextuallyTypedRowValueConstructor
 
   //7.3
-  lazy val contextuallyTypedTableValueConstructor = VALUES ~> contextuallyTypedRowValueExpressionList
+  lazy val contextuallyTypedTableValueConstructor: Parser[List[List[ValueExpression]]] = VALUES ~> contextuallyTypedRowValueExpressionList
   lazy val contextuallyTypedRowValueExpressionList = rep1sep(contextuallyTypedRowValueExpression, COMMA)
 
 
@@ -418,8 +419,9 @@ private object SqlParserInt extends Parsers {
   // [   <collate clause>]
 
   //14.8
-  lazy val insertStatement = INSERT ~> INTO ~> insertionTarget ~ insertColumnsAndSource ^^ {
-    case t ~ s => SqlInsertStatement()
+  lazy val insertStatement =
+    INSERT ~> INTO ~> insertionTarget ~ insertColumnsAndSource ^^ {
+    case t ~ cs => SqlInsertStatement(t, cs._1, cs._2)
   }
   lazy val insertionTarget = tableName
 
@@ -430,10 +432,12 @@ private object SqlParserInt extends Parsers {
       err("unknown insertColumnsAndSource")
 
 
-  lazy val fromConstructor =
+  lazy val fromConstructor: Parser[(Option[List[String]], List[List[ValueExpression]])] =
     opt(BRACKET_LEFT ~> insertColumnList <~ BRACKET_RIGHT) ~
       //opt(overrideClause) ~
-      contextuallyTypedTableValueConstructor
+      contextuallyTypedTableValueConstructor ^^ {
+      case c ~ s => (c, s)
+    }
   lazy val insertColumnList = columnNameList
 
   val statement: Parser[SqlStatement] =

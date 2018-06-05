@@ -6,7 +6,12 @@ case class SqlCreateTableStatement(name: String, columnDefenition: Seq[ColumnDef
 
 case class SqlSelectStatement(terms: Seq[SelectTerm], from: Seq[TableReference]) extends SqlStatement
 
-case class SqlInsertStatement() extends SqlStatement
+case class SqlInsertStatement
+(
+  tableName: String,
+  columns: Option[List[String]],
+  sources: List[List[ValueExpression]]
+) extends SqlStatement
 
 sealed trait SelectTerm
 
@@ -43,19 +48,17 @@ sealed trait BooleanExpression extends ValueExpression
 
 case class BooleanExpressionBinary
 (operation: BooleanOperarion,
- left: BooleanExpression,
- right: BooleanExpression
+ left: ValueExpression,
+ right: ValueExpression
 ) extends BooleanExpression
 
-case class BooleanExpressionNot(expr: BooleanExpression) extends BooleanExpression
+case class BooleanExpressionNot(expr: ValueExpression) extends BooleanExpression
 
 case class BooleanExpressionComparision
 (operation: ComparisionOperarion,
  left: ValueExpression,
  right: ValueExpression
 ) extends BooleanExpression
-
-case class BooleanExpressionFromValue(value: ValueExpression) extends BooleanExpression
 
 sealed trait BooleanOperarion
 
@@ -94,6 +97,7 @@ case class NumericExpressionBinary
 ) extends NumericExpression with ValueExpressionBinary
 
 case class NumericExpressionUnaryMinus(value: ValueExpression) extends NumericExpression
+
 case class NumericExpressionConstant(value: String) extends NumericExpression
 
 sealed trait NumericOperarion extends ValueOperarion

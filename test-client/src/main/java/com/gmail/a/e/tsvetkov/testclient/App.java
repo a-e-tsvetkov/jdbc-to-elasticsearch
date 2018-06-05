@@ -7,12 +7,10 @@ public class App {
         Class.forName(com.gmail.a.e.tsvetkov.driver.Driver.class.getName());
 
         try (Connection connection = DriverManager.getConnection("jdbc:mydriver:localhost")) {
-            System.out.println("Connection = " + connection);
-
             Statement statement = connection.createStatement();
             statement.execute("create table t1( field1 int)");
 
-            statement.executeUpdate("insert into  field1 (t1) values (1)");
+            statement.executeUpdate("insert into t1 (field1) values (4),(5)");
 
 /*
         ResultSet res = statement.executeQuery("select field1 from t1");
