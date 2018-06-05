@@ -6,6 +6,7 @@ case class SqlCreateTableStatement(name: String, columnDefenition: Seq[ColumnDef
 
 case class SqlSelectStatement(terms: Seq[SelectTerm], from: Seq[TableReference]) extends SqlStatement
 
+case class SqlInsertStatement() extends SqlStatement
 
 sealed trait SelectTerm
 
@@ -93,6 +94,7 @@ case class NumericExpressionBinary
 ) extends NumericExpression with ValueExpressionBinary
 
 case class NumericExpressionUnaryMinus(value: ValueExpression) extends NumericExpression
+case class NumericExpressionConstant(value: String) extends NumericExpression
 
 sealed trait NumericOperarion extends ValueOperarion
 

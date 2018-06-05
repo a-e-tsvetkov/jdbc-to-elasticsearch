@@ -1,94 +1,132 @@
 package com.gmail.a.e.tsvetkov.driver.sql.parser
 
-import scala.util.parsing.combinator.RegexParsers
+import scala.util.parsing.combinator.lexical.{Lexical, Scanners}
+import scala.util.parsing.input.CharArrayReader.EofCh
+import scala.util.parsing.input.{CharSequenceReader, Reader}
 
-object SqlLexerInt extends RegexParsers {
+object SqlLexerInt extends Scanners {
+
 
   import SqlToken._
 
-  override def skipWhitespace: Boolean = true
+  def letter = elem("letter", _.isLetter)
 
-  val regularIdentifier = "[a-zA-Z][a-zA-Z0-9]*".r ^^ IDENTIFIER
-  val delimitedIdentifier = "\"" ~> "[^\"]".r <~ "\"" ^^ { s =>
-    IDENTIFIER(s.substring(1, s.length - 1))
-  }
-  val actualIdentifier = regularIdentifier | delimitedIdentifier
+  def digit = elem("digit", _.isDigit)
+
+  def chrExcept(cs: Char*) = elem("![" + cs.mkString("") + "]", ch => (cs forall (ch != _)))
+
+  def whitespaceChar = elem("space char", ch => ch <= ' ' && ch != EofCh)
 
 
-  val unsignedInteger = "[0-9]+".r ^^ (v => LITERAL_INTEGER(Integer.parseInt(v)))
-  val literal = unsignedInteger
+  override type Token = SqlToken
+
+  val numericLiteral =
+    rep1(digit) ~ opt('.' ~ rep(digit)) ^^ {
+      case a ~ b =>
+        val txt = b.map(a ++ "." ++ _._2).getOrElse(a)
+        LITERAL_NUMERIC(txt.mkString(""))
+    } |
+      '.' ~> rep(digit) ^^ {
+        case x =>
+          val txt = '.' +: x
+          LITERAL_NUMERIC(txt.mkString(""))
+      }
+
+
+  val literal = numericLiteral
 
   val operators =
-    "+" ^^ (_ => OP_PLUS) |
-      "-" ^^ (_ => OP_MINUS) |
-      "*" ^^ (_ => OP_MUL) |
-      "/" ^^ (_ => OP_DIV) |
-      "=" ^^ (_ => OP_EQ) |
-      "<>" ^^ (_ => OP_NE) |
-      "<" ^^ (_ => OP_LT) |
-      ">" ^^ (_ => OP_GT) |
-      "<=" ^^ (_ => OP_LE) |
-      ">=" ^^ (_ => OP_GE) |
-      "||" ^^ (_ => OP_CONCAT)
+    '+' ^^^ OP_PLUS |
+      '-' ^^^ OP_MINUS |
+      '*' ^^^ OP_MUL |
+      '/' ^^^ OP_DIV |
+      '=' ^^^ OP_EQ |
+      '<' ~ '>' ^^^ OP_NE |
+      '<' ~ '=' ^^^ OP_LE |
+      '<' ^^^ OP_LT |
+      '>' ~ '=' ^^^ OP_GE |
+      '>' ^^^ OP_GT |
+      '|' ~ '|' ^^^ OP_CONCAT
 
 
   val bracket =
-    "(" ^^ (_ => BRACKET_LEFT) |
-      ")" ^^ (_ => BRACKET_RIGHT)
+    '(' ^^^ BRACKET_LEFT |
+      ')' ^^^ BRACKET_RIGHT
 
   val separator =
-    "." ^^ (_ => PERIOD) |
-      "," ^^ (_ => COMMA)
+    '.' ^^^ PERIOD |
+      ',' ^^^ COMMA
 
-  val keyword =
-    "create" ^^ (_ => CREATE) |
-      "char" ^^ (_ => CHAR) |
-      "character" ^^ (_ => CHARACTER) |
-      "varchar" ^^ (_ => VARCHAR) |
-      "table" ^^ (_ => TABLE) |
-      "varying" ^^ (_ => VARYING) |
-      "numeric" ^^ (_ => NUMERIC) |
-      "decimal" ^^ (_ => DECIMAL) |
-      "dec" ^^ (_ => DEC) |
-      "smallint" ^^ (_ => SMALLINT) |
-      "integer" ^^ (_ => INTEGER) |
-      "int" ^^ (_ => INT) |
-      "bigint" ^^ (_ => BIGINT) |
-      "float" ^^ (_ => FLOAT) |
-      "real" ^^ (_ => REAL) |
-      "double" ^^ (_ => DOUBLE) |
-      "precision" ^^ (_ => PRECISION) |
-      "select" ^^ (_ => SELECT) |
-      "as" ^^ (_ => AS) |
-      "from" ^^ (_ => FROM) |
-      "only" ^^ (_ => ONLY) |
-      "join" ^^ (_ => JOIN) |
-      "inner" ^^ (_ => INNER) |
-      "outer" ^^ (_ => OUTER) |
-      "left" ^^ (_ => LEFT) |
-      "right" ^^ (_ => RIGHT) |
-      "full" ^^ (_ => FULL) |
-      "on" ^^ (_ => ON) |
-      "or" ^^ (_ => OR) |
-      "and" ^^ (_ => AND) |
-      "true" ^^ (_ => TRUE) |
-      "false" ^^ (_ => FALSE) |
-      "unknown" ^^ (_ => UNKNOWN) |
-      "is" ^^ (_ => IS) |
-      "not" ^^ (_ => NOT) |
-      "collate" ^^ (_ => COLLATE)
-
-  val goal = rep(keyword
-    | actualIdentifier
-    | literal
-    | bracket
-    | separator
+  val keyword = Map(
+    "create" -> CREATE,
+    "char" -> CHAR,
+    "character" -> CHARACTER,
+    "varchar" -> VARCHAR,
+    "table" -> TABLE,
+    "varying" -> VARYING,
+    "numeric" -> NUMERIC,
+    "decimal" -> DECIMAL,
+    "dec" -> DEC,
+    "smallint" -> SMALLINT,
+    "integer" -> INTEGER,
+    "int" -> INT,
+    "bigint" -> BIGINT,
+    "float" -> FLOAT,
+    "real" -> REAL,
+    "double" -> DOUBLE,
+    "precision" -> PRECISION,
+    "select" -> SELECT,
+    "as" -> AS,
+    "from" -> FROM,
+    "only" -> ONLY,
+    "join" -> JOIN,
+    "inner" -> INNER,
+    "outer" -> OUTER,
+    "left" -> LEFT,
+    "right" -> RIGHT,
+    "full" -> FULL,
+    "on" -> ON,
+    "or" -> OR,
+    "and" -> AND,
+    "true" -> TRUE,
+    "false" -> FALSE,
+    "unknown" -> UNKNOWN,
+    "is" -> IS,
+    "not" -> NOT,
+    "collate" -> COLLATE,
+    "insert" -> INSERT,
+    "into" -> INTO,
+    "values" -> VALUES
   )
 
-  def parse(sqlText: String): Either[SqlParseResultFailure, List[SqlToken]] = {
-    parse(goal, sqlText) match {
-      case Success(st, next) => Right(st)
-      case NoSuccess(msg, next) => Left(SqlParseResultFailure(msg))
-    }
+  val identifierOrKeyword = letter ~ rep(letter | digit) ^^ {
+    case x ~ xs =>
+      val ident = x :: xs mkString ""
+      keyword.getOrElse(ident.toLowerCase, IDENTIFIER(ident))
+  }
+  val delimitedIdentifier =
+    ('\"' ~> rep(chrExcept('"')) <~ '"') ^^ { s => IDENTIFIER(s.mkString("")) }
+
+  override def whitespace: Parser[Any] = rep[Any](
+    whitespaceChar
+      | '-' ~ '-' ~ rep(chrExcept(EofCh, '\n'))
+  )
+
+
+  override def token: Parser[SqlToken] =
+    identifierOrKeyword |
+      delimitedIdentifier |
+      literal |
+      operators |
+      bracket |
+      separator |
+      failure("Unknown token")
+
+
+  override def errorToken(msg: String): SqlToken = ERROR(msg)
+
+  def parse(sqlText: String): Reader[SqlToken] = {
+    val reader = new CharSequenceReader(sqlText)
+    new Scanner(reader)
   }
 }

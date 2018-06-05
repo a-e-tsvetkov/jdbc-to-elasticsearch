@@ -12,7 +12,7 @@ public class App {
             Statement statement = connection.createStatement();
             statement.execute("create table t1( field1 int)");
 
-//        statement.executeUpdate("insert into  field1 (t1) values ('v1')");
+            statement.executeUpdate("insert into  field1 (t1) values (1)");
 
 /*
         ResultSet res = statement.executeQuery("select field1 from t1");

@@ -4,9 +4,11 @@ sealed trait SqlToken
 
 object SqlToken {
 
+  case class ERROR(msg: String) extends SqlToken
+
   case class IDENTIFIER(value: String) extends SqlToken
 
-  case class LITERAL_INTEGER(value: Int) extends SqlToken
+  case class LITERAL_NUMERIC(value: String) extends SqlToken
 
   case object OP_PLUS extends SqlToken
 
@@ -110,5 +112,11 @@ object SqlToken {
   case object NOT extends SqlToken
 
   case object COLLATE extends SqlToken
+
+  case object INSERT extends SqlToken
+
+  case object INTO extends SqlToken
+
+  case object VALUES extends SqlToken
 
 }

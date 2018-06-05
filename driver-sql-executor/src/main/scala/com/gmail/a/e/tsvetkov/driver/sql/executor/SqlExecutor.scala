@@ -22,11 +22,8 @@ object SqlExecutor {
   def execute(client: HttpClient, statement: SqlStatement): Unit = {
     statement match {
       case s: SqlCreateTableStatement => CreateTableExecutor.createTable(client, s)
+      case s: SqlInsertStatement => InsertExecutor.execute(client, s)
     }
-  }
-
-  def createTable(statement: SqlCreateTableStatement): Unit = {
-
   }
 }
 
@@ -65,5 +62,11 @@ object CreateTableExecutor extends Util {
           .fields(statement.columnDefenition.map(fieldMapping))
       )
     check(client.execute(req).await)
+  }
+}
+
+object InsertExecutor {
+  def execute(client: HttpClient, s: SqlInsertStatement): Unit = {
+
   }
 }

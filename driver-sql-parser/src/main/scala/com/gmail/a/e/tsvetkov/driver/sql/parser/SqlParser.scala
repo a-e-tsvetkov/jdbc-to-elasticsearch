@@ -4,13 +4,12 @@ import com.gmail.a.e.tsvetkov.driver.sql.parser.Util._
 import com.gmail.a.e.tsvetkov.driver.sql.{BooleanExpression, _}
 
 import scala.util.parsing.combinator.Parsers
+import scala.util.parsing.input.Reader
 
 object SqlParser {
   def parse(sqlText: String): SqlParseResult = {
-    (for {
-      tokens <- SqlLexerInt.parse(sqlText).right
-      ast <- SqlParserInt.parse(tokens).right
-    } yield ast) match {
+    val tokens = SqlLexerInt.parse(sqlText)
+    SqlParserInt.parse(tokens) match {
       case Left(value) => value
       case Right(value) => SqlParseResultSuccess(value)
     }
@@ -27,7 +26,19 @@ private object SqlParserInt extends Parsers {
   //5.3
   lazy val sign = OP_PLUS | OP_MINUS
   lazy val unsignedInteger = {
-    accept("<unsigned integer>", { case v: LITERAL_INTEGER => v.value })
+    accept("<unsigned integer>", {
+      case LITERAL_NUMERIC(v) if !v.contains('.')
+      => Integer.parseInt(v)
+    })
+  }
+  lazy val unsignedLiteral = unsignedNumericLiteral //| generalLiteral
+  lazy val unsignedNumericLiteral = exactNumericLiteral //| approximateNumericLiteral
+
+
+  lazy val exactNumericLiteral = {
+    accept("<exact numeric literal> ", {
+      case LITERAL_NUMERIC(v) => NumericExpressionConstant(v)
+    })
   }
 
   //  --h3 5.4
@@ -102,8 +113,8 @@ private object SqlParserInt extends Parsers {
   lazy val parenthesizedValueExpression = BRACKET_LEFT ~> valueExpression <~ BRACKET_RIGHT
 
   lazy val nonparenthesizedValueExpressionPrimary =
-  //    unsignedValueSpecification |
-    columnReference |
+    unsignedValueSpecification |
+      columnReference |
       //      setFunctionSpecification |
       //      windowFunction |
       //      scalarSubquery |
@@ -123,9 +134,10 @@ private object SqlParserInt extends Parsers {
       //      nextValueExpression |
       failure("unexpected nonparenthesizedValueExpressionPrimary")
 
+  //6.4
+  lazy val unsignedValueSpecification = unsignedLiteral //| generalValueSpecification
+
   //6.6
-
-
   lazy val identifierChain = rep1sep(identifier, PERIOD)
 
   lazy val basicIdentifierChain = identifierChain
@@ -139,18 +151,16 @@ private object SqlParserInt extends Parsers {
   lazy val valueExpression =
     commonValueExpression |
       booleanValueExpression |
-      rowValueExpression |
-      failure("unknown valueExpression")
+      rowValueExpression
 
   lazy val commonValueExpression: Parser[ValueExpression] =
     numericValueExpression |
-      stringValueExpression |
+      stringValueExpression
       //    datetimeValueExpression |
       //    intervalValueExpression |
       //    userDefinedTypeValueExpression |
       //    referenceValueExpression |
       //    collectionValueExpression |
-      failure("unknown commonValueExpression")
 
   //6.26
   lazy val numericValueExpression: Parser[ValueExpression] =
@@ -195,7 +205,7 @@ private object SqlParserInt extends Parsers {
 
   //6.29
   lazy val stringValueFunction: Parser[ValueExpression] = //  <character value function> | <blob value function>
-    failure("not implemented stringValueFunction")
+    err("not implemented stringValueFunction")
 
   //6.34
   lazy val booleanValueExpression: Parser[BooleanExpression] =
@@ -233,6 +243,20 @@ private object SqlParserInt extends Parsers {
   /*|
        explicitRowValueConstructor*/
 
+
+  lazy val contextuallyTypedRowValueConstructor =
+    BRACKET_LEFT ~> rep1sep(contextuallyTypedRowValueConstructorElement, COMMA) <~ BRACKET_RIGHT |
+      commonValueExpression |
+      booleanValueExpression |
+      //      contextuallyTypedValueSpecification|
+      //  |     ROW <left paren> <contextually typed row value constructor element list> <right paren>
+      failure("unknown contextuallyTypedRowValueConstructor")
+
+  lazy val contextuallyTypedRowValueConstructorElement =
+    valueExpression
+  /*|
+       contextuallyTypedValueSpecification*/
+
   //7.2
   lazy val rowValueExpression =
     rowValueSpecialCase
@@ -242,6 +266,14 @@ private object SqlParserInt extends Parsers {
     rowValueSpecialCase |
       rowValueConstructorPredicand
   lazy val rowValueSpecialCase = nonparenthesizedValueExpressionPrimary
+  lazy val contextuallyTypedRowValueExpression =
+    rowValueSpecialCase |
+      contextuallyTypedRowValueConstructor
+
+  //7.3
+  lazy val contextuallyTypedTableValueConstructor = VALUES ~> contextuallyTypedRowValueExpressionList
+  lazy val contextuallyTypedRowValueExpressionList = rep1sep(contextuallyTypedRowValueExpression, COMMA)
+
 
   //7.4
   lazy val tableExpression =
@@ -268,10 +300,11 @@ private object SqlParserInt extends Parsers {
       //      tableFunctionDerivedTable <~ opt(AS) ~ correlationName /*opt( "(" ~> derivedColumnList <~ ")")*/ |
       //      onlySpec ~ opt(opt(AS) ~> correlationName) /*opt( "(" ~> derivedColumnList <~ ")")*/ |
       //      "(" ~> joinedTable <~ ")"
-      failure("unknown tablePrimary")
+      err("unknown tablePrimary")
 
   lazy val onlySpec = ONLY ~> BRACKET_LEFT ~> tableOrQueryName <~ BRACKET_RIGHT
   lazy val tableOrQueryName = tableName | queryName
+  lazy val columnNameList = rep1sep(columnName, COMMA)
 
   //7.7
   lazy val joinedTable =
@@ -279,7 +312,7 @@ private object SqlParserInt extends Parsers {
     qualifiedJoin |
       //      naturalJoin |
       //      unionJoin |
-      failure("unsupported join")
+      err("unsupported join")
 
   lazy val qualifiedJoin =
     tableReference ~
@@ -330,7 +363,7 @@ private object SqlParserInt extends Parsers {
       //      submultisetPredicate |
       //      setPredicate |
       //      typePredicate |
-      failure("unknown predicate")
+      err("unknown predicate")
 
   //8.2
   lazy val comparisonPredicate = rowValuePredicand ~ compOp ~ rowValuePredicand ^^ { case l ~ op ~ r => BooleanExpressionComparision(op, l, r) }
@@ -341,7 +374,7 @@ private object SqlParserInt extends Parsers {
       OP_GT ^^ (_ => ComparisionOperarionGt) |
       OP_LE ^^ (_ => ComparisionOperarionLe) |
       OP_GE ^^ (_ => ComparisionOperarionGe) |
-      failure("unknown compOp")
+      err("unknown compOp")
 
   //8.19
   lazy val searchCondition = booleanValueExpression
@@ -384,15 +417,36 @@ private object SqlParserInt extends Parsers {
   // [   <column constraint definition>... ]
   // [   <collate clause>]
 
+  //14.8
+  lazy val insertStatement = INSERT ~> INTO ~> insertionTarget ~ insertColumnsAndSource ^^ {
+    case t ~ s => SqlInsertStatement()
+  }
+  lazy val insertionTarget = tableName
+
+  lazy val insertColumnsAndSource =
+  //    fromSubquery |
+    fromConstructor |
+      //      fromDefault |
+      err("unknown insertColumnsAndSource")
+
+
+  lazy val fromConstructor =
+    opt(BRACKET_LEFT ~> insertColumnList <~ BRACKET_RIGHT) ~
+      //opt(overrideClause) ~
+      contextuallyTypedTableValueConstructor
+  lazy val insertColumnList = columnNameList
+
   val statement: Parser[SqlStatement] =
     tableDefinition |
-      querySpecification
+      querySpecification |
+      insertStatement |
+      err("unknown statement")
+
 
   val goal: Parser[SqlStatement] = statement
 
-  def parse(tokens: Seq[SqlToken]) = {
-    val reader = new TokenReader(tokens)
-    val value = goal(reader)
+  def parse(tokens: Reader[SqlToken]) = {
+    val value = goal(tokens)
     value match {
       case Success(st, next) => Right(st)
       case NoSuccess(msg, next) => Left(SqlParseResultFailure(msg))

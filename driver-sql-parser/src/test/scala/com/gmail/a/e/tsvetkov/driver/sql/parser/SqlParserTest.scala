@@ -2,7 +2,6 @@ package com.gmail.a.e.tsvetkov.driver.sql.parser
 
 import com.gmail.a.e.tsvetkov.driver.sql._
 import org.scalatest.FunSuite
-import org.scalatest.Assertions._
 
 class SqlParserTest extends FunSuite {
 
@@ -39,6 +38,16 @@ class SqlParserTest extends FunSuite {
             assert(expr.isInstanceOf[ValueExpressionColumnReference])
             assert(expr.asInstanceOf[ValueExpressionColumnReference].id == Seq("f1"))
         }
+    }
+  }
+
+  test("parse simple insert statement") {
+    val result = SqlParser.parse("insert into t1(f1, f2) values ( 1, 2)")
+    assert(result.isInstanceOf[SqlParseResultSuccess])
+    val statement = result.asInstanceOf[SqlParseResultSuccess].statement
+    assert(statement.isInstanceOf[SqlInsertStatement])
+    statement match {
+      case s: SqlInsertStatement =>
     }
   }
 }
