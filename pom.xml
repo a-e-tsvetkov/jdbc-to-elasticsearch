@@ -52,6 +52,7 @@
         <module>driver-sql-parser</module>
         <module>driver-sql</module>
         <module>driver-sql-executor</module>
+        <module>driver-resultset</module>
     </modules>
 
 </project>

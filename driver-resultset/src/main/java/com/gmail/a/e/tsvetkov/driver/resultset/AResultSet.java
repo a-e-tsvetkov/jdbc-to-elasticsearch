@@ -1,4 +1,4 @@
-package com.gmail.a.e.tsvetkov.driver;
+package com.gmail.a.e.tsvetkov.driver.resultset;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -9,12 +9,34 @@ import java.util.Calendar;
 import java.util.Map;
 
 public class AResultSet implements ResultSet {
-    public AResultSet(BResultSet result) {
+
+    private final Map<String, Integer> columns;
+    private final Object[][] objects;
+    private int current = -1;
+
+    AResultSet(Map<String, Integer> columns, Object[][] objects) {
+
+        this.columns = columns;
+        this.objects = objects;
+    }
+
+    public int count() {
+        return objects.length;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T getVal(int columnIndex) {
+        return (T) objects[current][columnIndex];
+    }
+    private <T> T  getVal(String columnLabel) {
+        Integer columnIndex = columns.get(columnLabel);
+        return getVal(columnIndex);
     }
 
     @Override
     public boolean next() {
-        return false;
+        current++;
+        return current < objects.length;
     }
 
     @Override
@@ -29,42 +51,42 @@ public class AResultSet implements ResultSet {
 
     @Override
     public String getString(int columnIndex) {
-        return null;
+        return getVal(columnIndex);
     }
 
     @Override
     public boolean getBoolean(int columnIndex) {
-        return false;
+        return getVal(columnIndex);
     }
 
     @Override
     public byte getByte(int columnIndex) {
-        return 0;
+        return getVal(columnIndex);
     }
 
     @Override
     public short getShort(int columnIndex) {
-        return 0;
+        return getVal(columnIndex);
     }
 
     @Override
     public int getInt(int columnIndex) {
-        return 0;
+        return getVal(columnIndex);
     }
 
     @Override
     public long getLong(int columnIndex) {
-        return 0;
+        return getVal(columnIndex);
     }
 
     @Override
     public float getFloat(int columnIndex) {
-        return 0;
+        return getVal(columnIndex);
     }
 
     @Override
     public double getDouble(int columnIndex) {
-        return 0;
+        return getVal(columnIndex);
     }
 
     @Override
@@ -109,7 +131,7 @@ public class AResultSet implements ResultSet {
 
     @Override
     public String getString(String columnLabel) {
-        return null;
+        return getVal(columnLabel);
     }
 
     @Override

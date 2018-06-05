@@ -1,5 +1,7 @@
 package com.gmail.a.e.tsvetkov.driver;
 
+import com.gmail.a.e.tsvetkov.driver.resultset.AResultSet;
+
 import java.sql.*;
 
 public class AStatement implements Statement {
@@ -11,20 +13,19 @@ public class AStatement implements Statement {
 
     @Override
     public ResultSet executeQuery(String sql) throws SQLException {
-        BResultSet result = link.execute(sql);
-        return new AResultSet(result);
+        return link.execute(sql);
     }
 
     @Override
     public int executeUpdate(String sql) throws SQLException {
-        BResultSet result = link.execute(sql);
-        return 0;
+        AResultSet result = link.execute(sql);
+        return result.count();
     }
 
     @Override
     public boolean execute(String sql) throws SQLException {
-        BResultSet result = link.execute(sql);
-        return false;
+        AResultSet result = link.execute(sql);
+        return true;
     }
 
     @Override

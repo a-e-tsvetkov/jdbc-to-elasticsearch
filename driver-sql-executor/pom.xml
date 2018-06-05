@@ -24,6 +24,11 @@
             <artifactId>driver-sql</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.gmail.a.e.tsvetkov</groupId>
+            <artifactId>driver-resultset</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.sksamuel.elastic4s</groupId>

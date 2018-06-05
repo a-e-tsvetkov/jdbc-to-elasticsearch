@@ -12,16 +12,18 @@ public class App {
 
             statement.executeUpdate("insert into t1 (field1) values (4),(5)");
 
-/*
-        ResultSet res = statement.executeQuery("select field1 from t1");
-        while(res.next()){
-            int f1ByIndex = res.getInt(0);
-            int f1ByLabel = res.getInt("field1");
-            if(f1ByIndex!=f1ByLabel){
-                throw new RuntimeException();
+
+            ResultSet res = statement.executeQuery("select field1 from t1");
+            while (res.next()) {
+                String f1ByIndex = res.getString(0);
+                String f1ByLabel = res.getString("field1");
+                if (!f1ByIndex.equals(f1ByLabel)) {
+                    throw new RuntimeException();
+                }
+
+                System.out.println(f1ByIndex);
             }
-        }
-*/
+
         }
     }
 }
