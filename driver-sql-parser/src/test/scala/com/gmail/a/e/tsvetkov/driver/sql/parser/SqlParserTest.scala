@@ -7,9 +7,7 @@ class SqlParserTest extends FunSuite {
 
   test("parse simple create table statement") {
     val result = SqlParser.parse("create table t1 (f1 int)")
-    assert(result.isInstanceOf[SqlParseResultSuccess])
-    val statement = result.asInstanceOf[SqlParseResultSuccess].statement
-    assert(statement.isInstanceOf[SqlCreateTableStatement])
+    val statement = asserResult[SqlCreateTableStatement](result)
     statement match {
       case SqlCreateTableStatement(name, cd) =>
         assert(name == "t1")
@@ -23,29 +21,25 @@ class SqlParserTest extends FunSuite {
   }
 
   test("parse simple select statement") {
-    val result = SqlParser.parse("select f1 f2 from t1")
-    assert(result.isInstanceOf[SqlParseResultSuccess])
-    val statement = result.asInstanceOf[SqlParseResultSuccess].statement
-    assert(statement.isInstanceOf[SqlSelectStatement])
-    statement match {
-      case SqlSelectStatement(terms, from) =>
-        assert(terms.length == 1)
-        assert(terms(0).isInstanceOf[SelectTermExpr])
-        terms(0) match {
-          case SelectTermExpr(expr, label) =>
-            assert(label.isDefined)
-            assert(label.get == "f2")
-            assert(expr.isInstanceOf[ValueExpressionColumnReference])
-            assert(expr.asInstanceOf[ValueExpressionColumnReference].id == Seq("f1"))
-        }
-    }
+    val result = SqlParser.parse("select f1 as ff1, f2 ff2 from t1, t2 a2")
+    val statement = asserResult[SqlSelectStatement](result)
+    assert(statement.from == Seq(
+      TableReferencePrimary("t1", None),
+      TableReferencePrimary("t2", Some("a2"))
+    ))
+    assert(statement.terms == Seq(
+      SelectTermExpr(
+        ValueExpressionColumnReference(SqlIdentifier(Seq("f1"))),
+        Some("ff1")),
+      SelectTermExpr(
+        ValueExpressionColumnReference(SqlIdentifier(Seq("f2"))),
+        Some("ff2"))))
+
   }
 
   test("parse simple insert statement") {
     val result = SqlParser.parse("insert into t1(f1, f2) values ( 1, 2)")
-    assert(result.isInstanceOf[SqlParseResultSuccess])
-    val statement = result.asInstanceOf[SqlParseResultSuccess].statement
-    assert(statement.isInstanceOf[SqlInsertStatement])
+    val statement = asserResult[SqlInsertStatement](result)
     statement match {
       case SqlInsertStatement(t, c, s) =>
         assert(t == "t1")
@@ -56,5 +50,12 @@ class SqlParserTest extends FunSuite {
             NumericExpressionConstant("1"),
             NumericExpressionConstant("2"))))
     }
+  }
+
+  private def asserResult[T](result: SqlParseResult) = {
+    assert(result.isInstanceOf[SqlParseResultSuccess])
+    val statement = result.asInstanceOf[SqlParseResultSuccess].statement
+    assert(statement.isInstanceOf[T])
+    statement.asInstanceOf[T]
   }
 }

@@ -126,4 +126,6 @@ case object StringOperarionConcat extends StringOperarion
 
 sealed trait ValueExpression
 
-case class ValueExpressionColumnReference(id: Seq[String]) extends ValueExpression
+case class ValueExpressionColumnReference(id: SqlIdentifier) extends ValueExpression
+
+case class SqlIdentifier(terms: Seq[String])

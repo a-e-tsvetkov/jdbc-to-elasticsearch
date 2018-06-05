@@ -138,13 +138,13 @@ private object SqlParserInt extends Parsers {
   lazy val unsignedValueSpecification = unsignedLiteral //| generalValueSpecification
 
   //6.6
-  lazy val identifierChain = rep1sep(identifier, PERIOD)
+  lazy val identifierChain = rep1sep(identifier, PERIOD) ^^ SqlIdentifier
 
   lazy val basicIdentifierChain = identifierChain
 
   //6.7
   lazy val columnReference =
-    basicIdentifierChain ^^ (ValueExpressionColumnReference(_))
+    basicIdentifierChain ^^ ValueExpressionColumnReference
   //      |     MODULE <period> <qualified identifier> <period> <column name>
 
   //6.25
