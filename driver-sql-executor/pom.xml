@@ -40,6 +40,11 @@
             <artifactId>elastic4s-http_2.12</artifactId>
             <version>${elastic4s.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.sksamuel.elastic4s</groupId>
+            <artifactId>elastic4s-jackson_2.12</artifactId>
+            <version>${elastic4s.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.scala-lang</groupId>
