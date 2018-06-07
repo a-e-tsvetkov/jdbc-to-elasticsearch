@@ -1,7 +1,7 @@
 # jdbc-to-elasticsearch
 JDBC driver for elasticsearch
 
-** WARNING** Very early stage. Don't expect too much. 
+**WARNING** Very early stage. Don't expect too much. 
 
 ## Project goal
 
