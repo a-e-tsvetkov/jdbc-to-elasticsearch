@@ -3,11 +3,13 @@ package com.gmail.a.e.tsvetkov.driver.sql.parser
 import com.gmail.a.e.tsvetkov.driver.sql._
 import org.scalatest.FunSuite
 
+import scala.reflect.{ClassTag, classTag}
+
 class SqlParserTest extends FunSuite {
 
   test("parse simple create table statement") {
     val result = SqlParser.parse("create table t1 (f1 int)")
-    val statement = asserResult[SqlCreateTableStatement](result)
+    val statement = assertResult[SqlCreateTableStatement](result)
     statement match {
       case SqlCreateTableStatement(name, cd) =>
         assert(name == "t1")
@@ -22,7 +24,7 @@ class SqlParserTest extends FunSuite {
 
   test("parse simple select statement") {
     val result = SqlParser.parse("select f1 as ff1, f2 ff2 from t1, t2 a2")
-    val statement = asserResult[SqlSelectStatement](result)
+    val statement = assertResult[SqlSelectStatement](result)
     assert(statement.from == Seq(
       TableReferencePrimary("t1", None),
       TableReferencePrimary("t2", Some("a2"))
@@ -39,7 +41,7 @@ class SqlParserTest extends FunSuite {
 
   test("parse simple insert statement") {
     val result = SqlParser.parse("insert into t1(f1, f2) values ( 1, 2)")
-    val statement = asserResult[SqlInsertStatement](result)
+    val statement = assertResult[SqlInsertStatement](result)
     statement match {
       case SqlInsertStatement(t, c, s) =>
         assert(t == "t1")
@@ -52,10 +54,10 @@ class SqlParserTest extends FunSuite {
     }
   }
 
-  private def asserResult[T](result: SqlParseResult) = {
+  private def assertResult[T: ClassTag](result: SqlParseResult) = {
     assert(result.isInstanceOf[SqlParseResultSuccess])
     val statement = result.asInstanceOf[SqlParseResultSuccess].statement
-    assert(statement.isInstanceOf[T])
+    assert(classTag[T].runtimeClass == statement.getClass)
     statement.asInstanceOf[T]
   }
 }

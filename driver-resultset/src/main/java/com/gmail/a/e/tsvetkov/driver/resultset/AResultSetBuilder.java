@@ -1,20 +1,21 @@
 package com.gmail.a.e.tsvetkov.driver.resultset;
 
+import com.gmail.a.e.tsvetkov.driver.resultset.AMetadataColumn.AMetadataColumnBuilder;
+
+import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class AResultSetBuilder {
-    private Map<String, Integer> columns = new HashMap<>();
+    private MetadataBuilder metadataBuilder = new MetadataBuilder();
     private List<RowBuilder> rows = new ArrayList<>();
 
     public static AResultSetBuilder builder() {
         return new AResultSetBuilder();
     }
 
-    public void addColumn(int index, String columnName) {
-        columns.put(columnName, index);
+    public MetadataBuilder getMetadataBuilder() {
+        return metadataBuilder;
     }
 
     public RowBuilder addRow() {
@@ -25,7 +26,7 @@ public class AResultSetBuilder {
 
     public AResultSet build() {
         return new AResultSet(
-                columns,
+                metadataBuilder.build(),
                 rows.stream()
                         .map(RowBuilder::build).
                         toArray(Object[][]::new)
@@ -41,6 +42,24 @@ public class AResultSetBuilder {
 
         Object[] build() {
             return values.toArray(new Object[0]);
+        }
+    }
+
+
+    public static class MetadataBuilder {
+        private List<AMetadataColumnBuilder> columns = new ArrayList<>();
+
+        public AMetadataColumnBuilder addColumn() {
+            AMetadataColumnBuilder builder = AMetadataColumn.builder();
+            columns.add(builder);
+            return builder;
+        }
+
+        ResultSetMetaData build() {
+            return new AMetadata(
+                    columns.stream()
+                            .map(AMetadataColumnBuilder::build)
+                            .toArray(AMetadataColumn[]::new));
         }
     }
 }

@@ -8,6 +8,9 @@ import com.sksamuel.elastic4s.http.search.SearchHit
 
 object SelectExecutor extends Executors {
 
+  object ScopeBuilder extends ScopeBuilder
+  object MetadataProvider extends MetadataProvider
+
   def getTableName(from: Seq[TableReference]) =
     from.head match {
       case TableReferencePrimary(tableName, correlatedName) =>
@@ -18,25 +21,29 @@ object SelectExecutor extends Executors {
 
   def generateNameFromExpression(expression: ValueExpression) = {
     expression match {
-      case _: BooleanExpression => err("expression in select is not supported")
-      case _: ValueExpressionBinary => err("expression in select is not supported")
-      case _: NumericExpression => err("expression in select is not supported")
-      case _: StringExpression => err("expression in select is not supported")
       case ValueExpressionColumnReference(id) => id.terms.head
+      case _ => "expr"
     }
   }
 
-  def termAlias(term: SelectTerm) = {
+
+  def columnMetadata(scope: Scope)(term: SelectTerm) = {
     term match {
       case SelectTermAll => err("Not support * in select")
       case SelectTermExpr(expression, label) =>
-        SelectResponseColumnMetadata(label.getOrElse(generateNameFromExpression(expression)))
+        val resolver = TypeResolver(scope)
+        val valueExpression = resolver.resolve(expression)
+        SelectResponseColumnMetadata(
+          label.getOrElse(generateNameFromExpression(expression)),
+          valueExpression.valueType
+        )
       case SelectTermQualifiedAll(qualifier) => err("Not support * in select")
     }
   }
 
-  def extractMetadata(s: SqlSelectStatement) = {
-    SelectResponseMetadata(s.terms.map(termAlias))
+  def extractMetadata(databaseMetadata:MetadataDatabase, s: SqlSelectStatement) = {
+    val scope = ScopeBuilder.buildScope(databaseMetadata, s.from)
+    SelectResponseMetadata(s.terms.map(columnMetadata(scope)))
   }
 
   def readDocument(metadata: SelectResponseMetadata)(h: SearchHit): SelectResponseRow = {
@@ -47,16 +54,17 @@ object SelectExecutor extends Executors {
   }
 
   def execute(client: HttpClient, s: SqlSelectStatement): SelectResponse = {
+    val databaseMetadata = MetadataProvider.getMetadata(client)
     val req = search(getTableName(s.from))
-    val metadata = extractMetadata(s)
+    val selectMetadata = extractMetadata(databaseMetadata, s)
     val documents = check(client.execute(req).await)
-    val data = documents.hits.hits.map(readDocument(metadata))
-    SelectResponse(metadata, data)
+    val data = documents.hits.hits.map(readDocument(selectMetadata))
+    SelectResponse(selectMetadata, data)
   }
 
 }
 
-case class SelectResponseColumnMetadata(name: String)
+case class SelectResponseColumnMetadata(name: String, columnType: ValueType)
 
 case class SelectResponseMetadata(columns: Seq[SelectResponseColumnMetadata])
 

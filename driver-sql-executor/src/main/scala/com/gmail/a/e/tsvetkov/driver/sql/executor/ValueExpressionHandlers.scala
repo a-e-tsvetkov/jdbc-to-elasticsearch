@@ -43,10 +43,11 @@ trait ValueExpressionHandlers {
       case BooleanExpressionComparision(operation, le, re) =>
         var l = extractValue(le)
         var r = extractValue(re)
-        if (l.valueType != r.valueType) {
-          err("Unable to compare: " + l + " and " + r)
-        }
-        l.valueType.comparator(operation, l, r)
+        l.asInstanceOf[BooleanValue]
+          .compare(
+            operation,
+            l.asInstanceOf[BooleanValue],
+            r.asInstanceOf[BooleanValue])
     })
   }
 

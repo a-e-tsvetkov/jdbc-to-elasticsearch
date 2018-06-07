@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer,
 object MetadataTypeSD {
   val TYPE_CHAR = "char"
   val TYPE_NUMERIC = "numeric"
+  val TYPE_BOOLEAN = "boolean"
   val PROPERTY_TYPE = "type"
 
   class MetadataTypeSerializer extends JsonSerializer[MetadataType] {
@@ -19,6 +20,8 @@ object MetadataTypeSD {
           jsonGenerator.writeStringField(PROPERTY_TYPE, TYPE_CHAR)
         case MetadataTypeNumeric =>
           jsonGenerator.writeStringField(PROPERTY_TYPE, TYPE_NUMERIC)
+        case MetadataTypeBoolean =>
+          jsonGenerator.writeStringField(PROPERTY_TYPE, TYPE_BOOLEAN)
       }
       jsonGenerator.writeEndObject()
     }
@@ -33,6 +36,7 @@ object MetadataTypeSD {
       id match {
         case TYPE_CHAR => MetadataTypeChar
         case TYPE_NUMERIC => MetadataTypeNumeric
+        case TYPE_BOOLEAN => MetadataTypeBoolean
       }
     }
   }

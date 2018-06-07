@@ -8,15 +8,14 @@ import java.sql.*;
 import java.util.Calendar;
 import java.util.Map;
 
-public class AResultSet implements ResultSet {
+public class AResultSet extends AWrapper implements ResultSet {
 
-    private final Map<String, Integer> columns;
+    private final ResultSetMetaData metadata;
     private final Object[][] objects;
     private int current = -1;
 
-    AResultSet(Map<String, Integer> columns, Object[][] objects) {
-
-        this.columns = columns;
+    AResultSet(ResultSetMetaData metadata, Object[][] objects) {
+        this.metadata = metadata;
         this.objects = objects;
     }
 
@@ -25,12 +24,37 @@ public class AResultSet implements ResultSet {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T getVal(int columnIndex) {
-        return (T) objects[current][columnIndex];
+    private <T> T getVal(int columnIndex) throws SQLException {
+        checkColumnIndex(columnIndex);
+        checkCurrent(current);
+        return (T) objects[current][columnIndex - 1];
     }
-    private <T> T  getVal(String columnLabel) {
-        Integer columnIndex = columns.get(columnLabel);
+
+    private void checkCurrent(int current) throws SQLException {
+        if (current < 0)
+            throw new SQLException("Call next() before accessing the data");
+        if (current >= objects.length)
+            throw new SQLException("Data is over");
+
+    }
+
+    private void checkColumnIndex(int columnIndex) throws SQLException {
+        if (columnIndex < 1 || columnIndex > metadata.getColumnCount())
+            throw new SQLException("Invalid index: " + columnIndex);
+    }
+
+    private <T> T getVal(String columnLabel) throws SQLException {
+        int columnIndex = getColumnIndex(columnLabel);
         return getVal(columnIndex);
+    }
+
+    private int getColumnIndex(String columnLabel) throws SQLException {
+        for (int i = 1; i <= metadata.getColumnCount(); i++) {
+            if (metadata.getColumnLabel(i).equals(columnLabel)) {
+                return i;
+            }
+        }
+        throw new SQLException("column not found: " + columnLabel);
     }
 
     @Override
@@ -50,42 +74,42 @@ public class AResultSet implements ResultSet {
     }
 
     @Override
-    public String getString(int columnIndex) {
+    public String getString(int columnIndex) throws SQLException {
         return getVal(columnIndex);
     }
 
     @Override
-    public boolean getBoolean(int columnIndex) {
+    public boolean getBoolean(int columnIndex) throws SQLException {
         return getVal(columnIndex);
     }
 
     @Override
-    public byte getByte(int columnIndex) {
+    public byte getByte(int columnIndex) throws SQLException {
         return getVal(columnIndex);
     }
 
     @Override
-    public short getShort(int columnIndex) {
+    public short getShort(int columnIndex) throws SQLException {
         return getVal(columnIndex);
     }
 
     @Override
-    public int getInt(int columnIndex) {
+    public int getInt(int columnIndex) throws SQLException {
         return getVal(columnIndex);
     }
 
     @Override
-    public long getLong(int columnIndex) {
+    public long getLong(int columnIndex) throws SQLException {
         return getVal(columnIndex);
     }
 
     @Override
-    public float getFloat(int columnIndex) {
+    public float getFloat(int columnIndex) throws SQLException {
         return getVal(columnIndex);
     }
 
     @Override
-    public double getDouble(int columnIndex) {
+    public double getDouble(int columnIndex) throws SQLException {
         return getVal(columnIndex);
     }
 
@@ -130,7 +154,7 @@ public class AResultSet implements ResultSet {
     }
 
     @Override
-    public String getString(String columnLabel) {
+    public String getString(String columnLabel) throws SQLException {
         return getVal(columnLabel);
     }
 
@@ -226,7 +250,7 @@ public class AResultSet implements ResultSet {
 
     @Override
     public ResultSetMetaData getMetaData() {
-        return null;
+        return metadata;
     }
 
     @Override
@@ -977,15 +1001,5 @@ public class AResultSet implements ResultSet {
     @Override
     public <T> T getObject(String columnLabel, Class<T> type) {
         return null;
-    }
-
-    @Override
-    public <T> T unwrap(Class<T> iface) {
-        return null;
-    }
-
-    @Override
-    public boolean isWrapperFor(Class<?> iface) {
-        return false;
     }
 }
