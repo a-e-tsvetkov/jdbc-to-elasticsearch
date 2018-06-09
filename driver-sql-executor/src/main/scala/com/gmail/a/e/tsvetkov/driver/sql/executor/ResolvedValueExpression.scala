@@ -1,5 +1,7 @@
 package com.gmail.a.e.tsvetkov.driver.sql.executor
 
+import scala.reflect.{ClassTag, classTag}
+
 sealed trait ResolvedValueExpression {
   val valueType: ValueType
 }
@@ -35,36 +37,173 @@ case class ResolvedValueExpression2
 
 sealed trait Op
 
-sealed trait Op1 extends Op
+sealed trait Op1 extends Op {
+  def compute(subVal: Value): Value
+}
 
-case object OpBooleanNot extends Op1
+case object OpBooleanNot extends Op1 {
+  override def compute(v: Value): Value = {
+    BooleanValue(!v.getValue[BooleanValue])
+  }
+}
 
-case object OpUnaryMinus extends Op1
+case object OpUnaryMinus extends Op1 {
+  override def compute(v: Value): Value = {
+    NumericValue(-v.getValue[NumericValue])
+  }
+}
 
-sealed trait Op2 extends Op
+sealed trait Op2 extends Op {
+  type Type <: Value
+  type ResultType <: Value
+  implicit val typeTag: ClassTag[Type] = classTag[Type]
 
-case object OpBooleanOr extends Op2
+  def compute
+  (
+    leftVal: Value,
+    rightVal: Value
+  ): ResultType
+}
 
-case object OpBooleanAnd extends Op2
+trait Op2Same extends Op2 {
 
-case object OpCompareEq extends Op2
+  override type ResultType = Type
 
-case object OpCompareNe extends Op2
+  def op
+  (
+    l: Type#RuntimeType,
+    r: Type#RuntimeType
+  ): Type#RuntimeType
 
-case object OpCompareGt extends Op2
+  def compute
+  (
+    leftVal: Value,
+    rightVal: Value
+  ): ResultType = {
+    val l = leftVal.getValue[Type]
+    val r = rightVal.getValue[Type]
+    val rr = op(l, r)
+    Value.apply[ResultType](rr)
+  }
 
-case object OpCompareLt extends Op2
+}
 
-case object OpCompareGe extends Op2
+trait Op2Compare extends Op2 {
+  override type Type = Value
+  override type ResultType = BooleanValue
 
-case object OpCompareLe extends Op2
+  def opString(l: String, r: String): Boolean
 
-case object OpNumericPlus extends Op2
+  def opBoolean(l: Boolean, r: Boolean): Boolean
 
-case object OpNumericMinus extends Op2
+  def opNumeric(l: BigDecimal, r: BigDecimal): Boolean
 
-case object OpNumericMult extends Op2
+  def compute
+  (
+    leftVal: Value,
+    rightVal: Value
+  ): BooleanValue = {
+    def conv[T<:Value:ClassTag] = (leftVal.getValue[T], leftVal.getValue[T])
+    Value.apply[BooleanValue](leftVal match {
+      case BooleanValue(_) =>
+        val (l, r) = conv[BooleanValue]
+        opBoolean(l, r)
+      case StringValue(_) =>
+        val (l, r) = conv[StringValue]
+        opString(l, r)
+      case NumericValue(_) =>
+        val (l, r) = conv[NumericValue]
+        opNumeric(l, r)
+    })
+  }
+}
 
-case object OpNumericDiv extends Op2
+case object OpBooleanOr extends Op2 with Op2Same {
+  override type Type = BooleanValue
 
-case object OpStringConcat extends Op2
+  override def op(l: Boolean, r: Boolean): Boolean = l | r
+}
+
+case object OpBooleanAnd extends Op2 with Op2Same {
+  override type Type = BooleanValue
+
+  override def op(l: Boolean, r: Boolean): Boolean = l & r
+}
+
+case object OpCompareEq extends Op2 with Op2Compare {
+  override def opString(l: String, r: String): Boolean = l == r
+
+  override def opBoolean(l: Boolean, r: Boolean): Boolean = l == r
+
+  override def opNumeric(l: BigDecimal, r: BigDecimal): Boolean = l == r
+}
+
+case object OpCompareNe extends Op2 with Op2Compare {
+  override def opString(l: String, r: String): Boolean = l != r
+
+  override def opBoolean(l: Boolean, r: Boolean): Boolean = l != r
+
+  override def opNumeric(l: BigDecimal, r: BigDecimal): Boolean = l != r
+}
+
+case object OpCompareGt extends Op2 with Op2Compare {
+  override def opString(l: String, r: String): Boolean = l > r
+
+  override def opBoolean(l: Boolean, r: Boolean): Boolean = l > r
+
+  override def opNumeric(l: BigDecimal, r: BigDecimal): Boolean = l > r
+}
+
+case object OpCompareLt extends Op2 with Op2Compare {
+  override def opString(l: String, r: String): Boolean = l < r
+
+  override def opBoolean(l: Boolean, r: Boolean): Boolean = l < r
+
+  override def opNumeric(l: BigDecimal, r: BigDecimal): Boolean = l < r
+}
+
+case object OpCompareGe extends Op2 with Op2Compare {
+  override def opString(l: String, r: String): Boolean = l >= r
+
+  override def opBoolean(l: Boolean, r: Boolean): Boolean = l >= r
+
+  override def opNumeric(l: BigDecimal, r: BigDecimal): Boolean = l >= r
+}
+
+case object OpCompareLe extends Op2 with Op2Compare {
+  override def opString(l: String, r: String): Boolean = l <= r
+
+  override def opBoolean(l: Boolean, r: Boolean): Boolean = l <= r
+
+  override def opNumeric(l: BigDecimal, r: BigDecimal): Boolean = l <= r
+}
+
+case object OpNumericPlus extends Op2 with Op2Same {
+  override type Type = NumericValue
+
+  override def op(l: BigDecimal, r: BigDecimal): BigDecimal = l + r
+}
+
+case object OpNumericMinus extends Op2 with Op2Same {
+  override type Type = NumericValue
+
+  override def op(l: BigDecimal, r: BigDecimal): BigDecimal = l - r
+}
+
+case object OpNumericMult extends Op2 with Op2Same {
+  override type Type = NumericValue
+
+  override def op(l: BigDecimal, r: BigDecimal): BigDecimal = l * r
+}
+
+case object OpNumericDiv extends Op2 with Op2Same {
+  override type Type = NumericValue
+
+  override def op(l: BigDecimal, r: BigDecimal): BigDecimal = l / r
+}
+
+case object OpStringConcat extends Op2 with Op2Same {
+  override type Type = StringValue
+
+  override def op(l: String, r: String): String = l + r
+}

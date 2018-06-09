@@ -47,8 +47,13 @@ object SqlExecutor {
         result.data
           .foreach { r =>
             val row = builder.addRow()
-            r.values.foreach { cell =>
-              row.addCell(cell)
+            r.values.foreach {
+              case BooleanValue(v) =>
+                row.addCell(v)
+              case StringValue(v) =>
+                row.addCell(v)
+              case NumericValue(v) =>
+                row.addCell(v.bigDecimal)
             }
           }
         builder.build()

@@ -2,6 +2,7 @@ package com.gmail.a.e.tsvetkov.driver.resultset;
 
 import com.gmail.a.e.tsvetkov.driver.resultset.AMetadataColumn.AMetadataColumnBuilder;
 
+import java.math.BigDecimal;
 import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,19 +30,27 @@ public class AResultSetBuilder {
                 metadataBuilder.build(),
                 rows.stream()
                         .map(RowBuilder::build).
-                        toArray(Object[][]::new)
+                        toArray(ResultValue[][]::new)
         );
     }
 
     public static class RowBuilder {
-        private List<Object> values = new ArrayList<>();
+        private List<ResultValue> values = new ArrayList<>();
 
-        public void addCell(Object value) {
-            values.add(value);
+        public void addCell(boolean value) {
+            values.add(new ResultValueBoolean(value));
         }
 
-        Object[] build() {
-            return values.toArray(new Object[0]);
+        public void addCell(String value) {
+            values.add(new ResultValueString(value));
+        }
+
+        public void addCell(BigDecimal value) {
+            values.add(new ResultValueBigDecimal(value));
+        }
+
+        ResultValue[] build() {
+            return values.toArray(new ResultValue[0]);
         }
     }
 

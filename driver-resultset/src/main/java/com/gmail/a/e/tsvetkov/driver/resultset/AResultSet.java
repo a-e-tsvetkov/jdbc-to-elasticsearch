@@ -11,10 +11,10 @@ import java.util.Map;
 public class AResultSet extends AWrapper implements ResultSet {
 
     private final ResultSetMetaData metadata;
-    private final Object[][] objects;
+    private final ResultValue[][] objects;
     private int current = -1;
 
-    AResultSet(ResultSetMetaData metadata, Object[][] objects) {
+    AResultSet(ResultSetMetaData metadata, ResultValue[][] objects) {
         this.metadata = metadata;
         this.objects = objects;
     }
@@ -23,11 +23,10 @@ public class AResultSet extends AWrapper implements ResultSet {
         return objects.length;
     }
 
-    @SuppressWarnings("unchecked")
-    private <T> T getVal(int columnIndex) throws SQLException {
+    private ResultValue getVal(int columnIndex) throws SQLException {
         checkColumnIndex(columnIndex);
         checkCurrent(current);
-        return (T) objects[current][columnIndex - 1];
+        return objects[current][columnIndex - 1];
     }
 
     private void checkCurrent(int current) throws SQLException {
@@ -43,7 +42,7 @@ public class AResultSet extends AWrapper implements ResultSet {
             throw new SQLException("Invalid index: " + columnIndex);
     }
 
-    private <T> T getVal(String columnLabel) throws SQLException {
+    private ResultValue getVal(String columnLabel) throws SQLException {
         int columnIndex = getColumnIndex(columnLabel);
         return getVal(columnIndex);
     }
@@ -75,42 +74,42 @@ public class AResultSet extends AWrapper implements ResultSet {
 
     @Override
     public String getString(int columnIndex) throws SQLException {
-        return getVal(columnIndex);
+        return getVal(columnIndex).getString();
     }
 
     @Override
     public boolean getBoolean(int columnIndex) throws SQLException {
-        return getVal(columnIndex);
+        return getVal(columnIndex).getBoolean();
     }
 
     @Override
     public byte getByte(int columnIndex) throws SQLException {
-        return getVal(columnIndex);
+        return getVal(columnIndex).getByte();
     }
 
     @Override
     public short getShort(int columnIndex) throws SQLException {
-        return getVal(columnIndex);
+        return getVal(columnIndex).getShort();
     }
 
     @Override
     public int getInt(int columnIndex) throws SQLException {
-        return getVal(columnIndex);
+        return getVal(columnIndex).getInt();
     }
 
     @Override
     public long getLong(int columnIndex) throws SQLException {
-        return getVal(columnIndex);
+        return getVal(columnIndex).getLong();
     }
 
     @Override
     public float getFloat(int columnIndex) throws SQLException {
-        return getVal(columnIndex);
+        return getVal(columnIndex).getFloat();
     }
 
     @Override
     public double getDouble(int columnIndex) throws SQLException {
-        return getVal(columnIndex);
+        return getVal(columnIndex).getDouble();
     }
 
     @Override
@@ -155,42 +154,46 @@ public class AResultSet extends AWrapper implements ResultSet {
 
     @Override
     public String getString(String columnLabel) throws SQLException {
-        return getVal(columnLabel);
+        return getVal(columnLabel).getString();
     }
 
     @Override
-    public boolean getBoolean(String columnLabel) {
-        return false;
+    public boolean getBoolean(String columnLabel) throws SQLException {
+        return getVal(columnLabel).getBoolean();
+
     }
 
     @Override
-    public byte getByte(String columnLabel) {
-        return 0;
+    public byte getByte(String columnLabel) throws SQLException {
+        return getVal(columnLabel).getByte();
+
     }
 
     @Override
-    public short getShort(String columnLabel) {
-        return 0;
+    public short getShort(String columnLabel) throws SQLException {
+        return getVal(columnLabel).getShort();
+
     }
 
     @Override
-    public int getInt(String columnLabel) {
-        return 0;
+    public int getInt(String columnLabel) throws SQLException {
+        return getVal(columnLabel).getInt();
     }
 
     @Override
-    public long getLong(String columnLabel) {
-        return 0;
+    public long getLong(String columnLabel) throws SQLException {
+        return getVal(columnLabel).getLong();
     }
 
     @Override
-    public float getFloat(String columnLabel) {
-        return 0;
+    public float getFloat(String columnLabel) throws SQLException {
+        return getVal(columnLabel).getFloat();
     }
 
     @Override
-    public double getDouble(String columnLabel) {
-        return 0;
+    public double getDouble(String columnLabel) throws SQLException {
+        return getVal(columnLabel).getDouble();
+
     }
 
     @Override
