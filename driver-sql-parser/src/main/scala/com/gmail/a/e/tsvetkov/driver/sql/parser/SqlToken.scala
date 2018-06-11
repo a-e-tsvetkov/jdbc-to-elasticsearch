@@ -119,4 +119,6 @@ object SqlToken {
 
   case object VALUES extends SqlToken
 
+  case object WHERE extends SqlToken
+
 }

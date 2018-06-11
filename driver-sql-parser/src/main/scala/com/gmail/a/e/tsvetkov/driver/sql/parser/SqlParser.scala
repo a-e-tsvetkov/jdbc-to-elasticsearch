@@ -278,8 +278,8 @@ private object SqlParserInt extends Parsers with PackratParsers {
 
   //7.4
   lazy val tableExpression =
-    fromClause //~
-  //      opt(whereClause) ~
+    fromClause ~
+      opt(whereClause) //~
   //      opt(groupByClause) ~
   //      opt(havingClause) ~
   //      opt(windowClause)
@@ -330,9 +330,12 @@ private object SqlParserInt extends Parsers with PackratParsers {
       RIGHT ^^ (_ => JoinTypeRightOuter) |
       FULL ^^ (_ => JoinTypeFullOuter)
 
+  //7.8
+  lazy val whereClause = WHERE ~> searchCondition
+
   //7.12
   lazy val querySpecification = (SELECT ~> //[ <set quantifier> ]
-    selectList ~ tableExpression) ^^ { case s ~ e => SqlSelectStatement(s, e) }
+    selectList ~ tableExpression) ^^ { case s ~ (e ~ w) => SqlSelectStatement(s, e, w) }
   lazy val selectList: Parser[Seq[SelectTerm]] =
     OP_MUL ^^ { _ => Seq(SelectTermAll) } |
       rep1sep(selectSublist, COMMA)
@@ -446,8 +449,7 @@ private object SqlParserInt extends Parsers with PackratParsers {
       insertStatement |
       err("unknown statement")
 
-
-  val goal: Parser[SqlStatement] = statement
+  val goal: Parser[SqlStatement] = phrase(statement)
 
   def parse(tokens: Reader[SqlToken]) = {
     val value = goal(new PackratReader[SqlToken](tokens))

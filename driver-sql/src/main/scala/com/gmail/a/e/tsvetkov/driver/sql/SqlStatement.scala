@@ -4,7 +4,7 @@ sealed trait SqlStatement
 
 case class SqlCreateTableStatement(name: String, columnDefenition: Seq[ColumnDefenition]) extends SqlStatement
 
-case class SqlSelectStatement(terms: Seq[SelectTerm], from: Seq[TableReference]) extends SqlStatement
+case class SqlSelectStatement(terms: Seq[SelectTerm], from: Seq[TableReference], where : Option[ValueExpression]) extends SqlStatement
 
 case class SqlInsertStatement
 (

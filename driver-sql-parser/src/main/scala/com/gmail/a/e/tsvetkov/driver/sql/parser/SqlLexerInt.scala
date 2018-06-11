@@ -96,7 +96,8 @@ object SqlLexerInt extends Scanners {
     "collate" -> COLLATE,
     "insert" -> INSERT,
     "into" -> INTO,
-    "values" -> VALUES
+    "values" -> VALUES,
+    "where" -> WHERE
   )
 
   val identifierOrKeyword = letter ~ rep(letter | digit) ^^ {
