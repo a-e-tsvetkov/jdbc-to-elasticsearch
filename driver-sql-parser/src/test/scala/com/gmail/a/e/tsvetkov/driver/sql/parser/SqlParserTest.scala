@@ -39,6 +39,32 @@ class SqlParserTest extends FunSuite {
 
   }
 
+  test("parse select statement with expressions") {
+    val result = SqlParser.parse("select 1 + 1, 1 - f1, 2 = f3 from t1")
+    val statement = assertResult[SqlSelectStatement](result)
+    assert(statement.terms == Seq(
+      SelectTermExpr(
+        NumericExpressionBinary(
+          NumericOperarionPlus,
+          NumericExpressionConstant("1"),
+          NumericExpressionConstant("1")),
+        None),
+      SelectTermExpr(
+        NumericExpressionBinary(
+          NumericOperarionMinus,
+          NumericExpressionConstant("1"),
+          ValueExpressionColumnReference(
+            SqlIdentifier(List("f1")))),
+        None),
+      SelectTermExpr(
+        BooleanExpressionComparision(
+          ComparisionOperarionEq,
+          NumericExpressionConstant("2"),
+          ValueExpressionColumnReference(
+            SqlIdentifier(List("f3")))),
+        None)))
+  }
+
   test("parse simple insert statement") {
     val result = SqlParser.parse("insert into t1(f1, f2) values ( 1, 2)")
     val statement = assertResult[SqlInsertStatement](result)

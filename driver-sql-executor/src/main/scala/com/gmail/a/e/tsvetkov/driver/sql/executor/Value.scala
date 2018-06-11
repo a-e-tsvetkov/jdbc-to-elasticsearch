@@ -6,7 +6,8 @@ sealed trait Value {
   type RuntimeType
 
   def getValue[T <: Value](implicit t: ClassTag[T]): T#RuntimeType = {
-    assert(classTag[T].runtimeClass == getClass)
+    assert(t.runtimeClass == getClass,
+      s"Type mismatch. Expected ${getClass}, but actual ${t.runtimeClass}")
     asInstanceOf[T].v
   }
 
@@ -18,15 +19,15 @@ object Value {
     c(v.asInstanceOf[C#RuntimeType])
   }
 
-  val map: Map[Class[_], Any => Value] = Map(
-    (BooleanValue.getClass, create[BooleanValue](BooleanValue, _)),
-    (StringValue.getClass, create[StringValue](StringValue, _)),
-    (NumericValue.getClass, create[NumericValue](NumericValue, _))
+  val map: Map[ClassTag[_], Any => Value] = Map(
+    (classTag[BooleanValue], create[BooleanValue](BooleanValue, _)),
+    (classTag[StringValue], create[StringValue](StringValue, _)),
+    (classTag[NumericValue], create[NumericValue](NumericValue, _))
 
   )
 
   def apply[T <: Value : ClassTag](v: Any): T = {
-    map(classTag[T].runtimeClass )(v).asInstanceOf[T]
+    map(classTag[T])(v).asInstanceOf[T]
   }
 }
 

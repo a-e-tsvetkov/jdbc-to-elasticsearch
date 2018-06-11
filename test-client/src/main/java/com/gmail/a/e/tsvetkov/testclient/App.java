@@ -17,15 +17,17 @@ public class App {
 
 
             ResultSet res = statement.executeQuery(
-                    "select field1, field1 as t from t1");
+                    "select field1 as t, field1 + 1, field1 * field2 from t1");
             ResultSetMetaData metaData = res.getMetaData();
-            check(metaData.getColumnCount() == 2);
+            check(metaData.getColumnCount() == 3);
             check(metaData.getColumnType(1) == Types.NUMERIC);
             while (res.next()) {
                 int f1ByIndex = res.getInt(1);
                 int f1ByLabel = res.getInt("t");
                 check(f1ByIndex == f1ByLabel);
-                System.out.println(f1ByIndex);
+                int f2 = res.getInt(2);
+                int f3 = res.getInt(3);
+                System.out.printf("%1d %2d %3d\n", f1ByIndex, f2, f3);
             }
 
         }

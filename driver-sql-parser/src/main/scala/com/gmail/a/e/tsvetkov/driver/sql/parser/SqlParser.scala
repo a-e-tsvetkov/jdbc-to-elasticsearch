@@ -3,7 +3,7 @@ package com.gmail.a.e.tsvetkov.driver.sql.parser
 import com.gmail.a.e.tsvetkov.driver.sql.parser.Util._
 import com.gmail.a.e.tsvetkov.driver.sql.{BooleanExpression, _}
 
-import scala.util.parsing.combinator.Parsers
+import scala.util.parsing.combinator.{PackratParsers, Parsers}
 import scala.util.parsing.input.Reader
 
 object SqlParser {
@@ -16,7 +16,7 @@ object SqlParser {
   }
 }
 
-private object SqlParserInt extends Parsers {
+private object SqlParserInt extends Parsers with PackratParsers {
 
   import SqlToken._
 
@@ -149,8 +149,8 @@ private object SqlParserInt extends Parsers {
 
   //6.25
   lazy val valueExpression =
-    commonValueExpression |
-      booleanValueExpression |
+    commonValueExpression |||
+      booleanValueExpression |||
       rowValueExpression
 
   lazy val commonValueExpression: Parser[ValueExpression] =
@@ -163,15 +163,15 @@ private object SqlParserInt extends Parsers {
   //    collectionValueExpression |
 
   //6.26
-  lazy val numericValueExpression: Parser[ValueExpression] =
-    term |
-      numericValueExpression ~ OP_PLUS ~ term ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionPlus, l, r) } |
-      numericValueExpression ~ OP_MINUS ~ term ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionMinus, l, r) }
+  lazy val numericValueExpression: PackratParser[ValueExpression] =
+    numericValueExpression ~ OP_PLUS ~ term ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionPlus, l, r) } |
+      numericValueExpression ~ OP_MINUS ~ term ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionMinus, l, r) } |
+      term
 
-  lazy val term: Parser[ValueExpression] =
-    factor |
-      term ~ OP_MUL ~ factor ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionMult, l, r) } |
-      term ~ OP_DIV ~ factor ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionDiv, l, r) }
+  lazy val term: PackratParser[ValueExpression] =
+    term ~ OP_MUL ~ factor ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionMult, l, r) } |
+      term ~ OP_DIV ~ factor ^^ { case l ~ _ ~ r => NumericExpressionBinary(NumericOperarionDiv, l, r) } |
+      factor
 
   lazy val factor = opt(sign) ~ numericPrimary ^^ {
     case s ~ v => s
@@ -205,7 +205,7 @@ private object SqlParserInt extends Parsers {
 
   //6.29
   lazy val stringValueFunction: Parser[ValueExpression] = //  <character value function> | <blob value function>
-    err("not implemented stringValueFunction")
+    failure("not implemented stringValueFunction")
 
   //6.34
   lazy val booleanValueExpression =
@@ -268,8 +268,8 @@ private object SqlParserInt extends Parsers {
       rowValueConstructorPredicand
   lazy val rowValueSpecialCase = nonparenthesizedValueExpressionPrimary
   lazy val contextuallyTypedRowValueExpression =
-//    rowValueSpecialCase |
-      contextuallyTypedRowValueConstructor
+  //    rowValueSpecialCase |
+    contextuallyTypedRowValueConstructor
 
   //7.3
   lazy val contextuallyTypedTableValueConstructor: Parser[List[List[ValueExpression]]] = VALUES ~> contextuallyTypedRowValueExpressionList
@@ -301,7 +301,7 @@ private object SqlParserInt extends Parsers {
       //      tableFunctionDerivedTable <~ opt(AS) ~ correlationName /*opt( "(" ~> derivedColumnList <~ ")")*/ |
       //      onlySpec ~ opt(opt(AS) ~> correlationName) /*opt( "(" ~> derivedColumnList <~ ")")*/ |
       //      "(" ~> joinedTable <~ ")"
-      err("unknown tablePrimary")
+      failure("unknown tablePrimary")
 
   lazy val onlySpec = ONLY ~> BRACKET_LEFT ~> tableOrQueryName <~ BRACKET_RIGHT
   lazy val tableOrQueryName = tableName | queryName
@@ -313,7 +313,7 @@ private object SqlParserInt extends Parsers {
     qualifiedJoin |
       //      naturalJoin |
       //      unionJoin |
-      err("unsupported join")
+      failure("unsupported join")
 
   lazy val qualifiedJoin =
     tableReference ~
@@ -364,7 +364,7 @@ private object SqlParserInt extends Parsers {
       //      submultisetPredicate |
       //      setPredicate |
       //      typePredicate |
-      err("unknown predicate")
+      failure("unknown predicate")
 
   //8.2
   lazy val comparisonPredicate = rowValuePredicand ~ compOp ~ rowValuePredicand ^^ { case l ~ op ~ r => BooleanExpressionComparision(op, l, r) }
@@ -375,7 +375,7 @@ private object SqlParserInt extends Parsers {
       OP_GT ^^ (_ => ComparisionOperarionGt) |
       OP_LE ^^ (_ => ComparisionOperarionLe) |
       OP_GE ^^ (_ => ComparisionOperarionGe) |
-      err("unknown compOp")
+      failure("unknown compOp")
 
   //8.19
   lazy val searchCondition = booleanValueExpression
@@ -421,8 +421,8 @@ private object SqlParserInt extends Parsers {
   //14.8
   lazy val insertStatement =
     INSERT ~> INTO ~> insertionTarget ~ insertColumnsAndSource ^^ {
-    case t ~ cs => SqlInsertStatement(t, cs._1, cs._2)
-  }
+      case t ~ cs => SqlInsertStatement(t, cs._1, cs._2)
+    }
   lazy val insertionTarget = tableName
 
   lazy val insertColumnsAndSource =
@@ -450,7 +450,7 @@ private object SqlParserInt extends Parsers {
   val goal: Parser[SqlStatement] = statement
 
   def parse(tokens: Reader[SqlToken]) = {
-    val value = goal(tokens)
+    val value = goal(new PackratReader[SqlToken](tokens))
     value match {
       case Success(st, next) => Right(st)
       case NoSuccess(msg, next) => Left(SqlParseResultFailure(msg))
