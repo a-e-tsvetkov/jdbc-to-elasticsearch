@@ -45,12 +45,11 @@ object SelectExecutor extends Executors {
     }
   }
 
-  def readDocument(metadata: SelectResponseMetadata)(h: SearchHit): SelectResponseRow = {
-    val fields = h.sourceAsMap
+  def readDocument(metadata: SelectResponseMetadata)(fieldsExtractor: ResolvedValueExpression => Value): SelectResponseRow = {
     SelectResponseRow(
       metadata.columns
         .map(x => x.columnExpression)
-        .map(ValueExtractor.extract(fields))
+        .map(fieldsExtractor)
     )
   }
 
@@ -182,7 +181,15 @@ object SelectExecutor extends Executors {
 
     val documents = check(client.execute(req).await)
 
-    val data = documents.hits.hits.map(readDocument(selectMetadata))
+    val data = documents.hits.hits
+      .map(_.sourceAsMap)
+      .map(ValueExtractor.extract)
+      .filter(x => {
+        whereExpr.map(y => x(y))
+          .getOrElse(BooleanValue(true))
+          .getValue[BooleanValue]
+      })
+      .map(readDocument(selectMetadata))
 
     SelectResponse(selectMetadata, data)
   }

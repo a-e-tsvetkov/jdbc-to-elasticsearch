@@ -94,6 +94,27 @@ class SqlParserTest extends FunSuite {
           SqlIdentifier(List("y")))))
   }
 
+  test("parse complex where in select statement") {
+    val result = SqlParser.parse("select a from b where x - 1 = y")
+    val statement = assertResult[SqlSelectStatement](result)
+
+    assert(statement.where.get ==
+      BooleanExpressionComparision(
+        ComparisionOperarionEq,
+        NumericExpressionBinary(
+          NumericOperarionMinus,
+          ValueExpressionColumnReference(
+            SqlIdentifier(List("x"))
+          ),
+          NumericExpressionConstant("1")
+        ),
+        ValueExpressionColumnReference(
+          SqlIdentifier(List("y"))
+        )
+      )
+    )
+  }
+
   private def assertResult[T: ClassTag](result: SqlParseResult) = {
     assert(result.isInstanceOf[SqlParseResultSuccess])
     val statement = result.asInstanceOf[SqlParseResultSuccess].statement

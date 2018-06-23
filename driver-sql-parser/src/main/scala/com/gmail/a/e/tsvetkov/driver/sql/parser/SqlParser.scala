@@ -154,7 +154,7 @@ private object SqlParserInt extends Parsers with PackratParsers {
       rowValueExpression
 
   lazy val commonValueExpression: Parser[ValueExpression] =
-    numericValueExpression |
+    numericValueExpression |||
       stringValueExpression
   //    datetimeValueExpression |
   //    intervalValueExpression |
@@ -187,9 +187,10 @@ private object SqlParserInt extends Parsers with PackratParsers {
   //6.28
   lazy val stringValueExpression: Parser[ValueExpression] =
     characterValueExpression | blobValueExpression
-  lazy val characterValueExpression: Parser[ValueExpression] =
+  lazy val characterValueExpression: PackratParser[ValueExpression] =
     concatenation | characterFactor
-  lazy val concatenation = characterValueExpression ~ OP_CONCAT ~ characterFactor ^^ {
+  lazy val concatenation =
+    characterValueExpression ~ OP_CONCAT ~ characterFactor ^^ {
     case l ~ _ ~ r => StringExpressionBinary(StringOperarionConcat, l, r)
   }
   lazy val characterFactor = characterPrimary <~ opt(collateClause)
@@ -264,7 +265,7 @@ private object SqlParserInt extends Parsers with PackratParsers {
   /*|
      explicitRowValueConstructor*/
   lazy val rowValuePredicand: Parser[ValueExpression] =
-    rowValueSpecialCase |
+    rowValueSpecialCase |||
       rowValueConstructorPredicand
   lazy val rowValueSpecialCase = nonparenthesizedValueExpressionPrimary
   lazy val contextuallyTypedRowValueExpression =

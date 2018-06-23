@@ -106,7 +106,7 @@ sealed trait Op2Compare extends Op2 {
     leftVal: Value,
     rightVal: Value
   ): BooleanValue = {
-    def conv[T <: Value : ClassTag] = (leftVal.getValue[T], leftVal.getValue[T])
+    def conv[T <: Value : ClassTag] = (leftVal.getValue[T], rightVal.getValue[T])
 
     Value.apply[BooleanValue](leftVal match {
       case BooleanValue(_) =>

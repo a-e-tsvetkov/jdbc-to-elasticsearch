@@ -17,9 +17,9 @@ public class App {
 
 
             ResultSet res = statement.executeQuery(
-                    "select field1 as t, field1 + 1, field2 from t1 where field1=4 and field2>1 ");
+                    "select field1 as t, field1 + 1, field2 from t1 where field1=4 and field2>1 and field2 - 3 = 0  ");
             ResultSetMetaData metaData = res.getMetaData();
-            check(metaData.getColumnCount() == 4);
+            check(metaData.getColumnCount() == 3);
             check(metaData.getColumnType(1) == Types.NUMERIC);
             while (res.next()) {
                 int f1ByIndex = res.getInt(1);
