@@ -111,11 +111,8 @@ object SelectExecutor extends Executors {
         }
       case expr@ResolvedValueExpression2(valueType, operation, left, right) =>
         operation match {
-//          case op: OpBoolean =>
-//            op match {
-              case OpBooleanAnd => createQuery(left) ++ createQuery(right)
-              case OpBooleanOr => Seq.empty
-//            }
+          case OpBooleanAnd => createQuery(left) ++ createQuery(right)
+          case OpBooleanOr => Seq.empty
           case op: Op2Compare =>
             extractRefAndConst(op, left, right)
               .map {
