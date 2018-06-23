@@ -10,17 +10,11 @@ object InsertExecutor extends Executors {
 
   object TypeResolver extends TypeResolver(Scope(Seq()))
 
-  def toJsonValue(value: Value) = {
-    value match {
-      case BooleanValue(v) => v
-      case StringValue(v) => v
-      case NumericValue(v) => v.toString
-    }
-  }
+  object JsonSerializer extends JsonValueSerializer
 
   def createDoc(columns: Seq[String], values: Seq[ResolvedValueExpression]) = {
     columns.zip(values).map {
-      case (c, v) => (c, toJsonValue(ValueExtractor.extract(Map())(v)))
+      case (c, v) => (c, JsonSerializer.toJsonValue(ValueExtractor.extract(Map())(v)))
     }
   }
 

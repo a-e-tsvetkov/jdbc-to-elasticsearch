@@ -35,6 +35,13 @@
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest_2.12</artifactId>
                 <version>3.0.5</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scalacheck</groupId>
+                <artifactId>scalacheck_2.12</artifactId>
+                <version>1.14.0</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.testng</groupId>
