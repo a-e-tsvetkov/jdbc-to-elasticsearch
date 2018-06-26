@@ -36,7 +36,7 @@ object SqlExecutor {
       Seq(value)
     }
 
-    def delInd(indexName: String) = {
+    def doDeleteIndex(indexName: String) = {
       client.execute(deleteIndex(indexName))
         .map(_
           .left.map(unwrapError("Unable to get delete index"))
@@ -44,7 +44,7 @@ object SqlExecutor {
         )
     }
 
-    case class Magic[A, B](e: Either[Future[A], Future[B]]) {
+    case class EitherExtender[A, B](e: Either[Future[A], Future[B]]) {
       def lift = e.fold(
         l => l.map(Left(_)),
         r => r.map(Right(_))
@@ -52,14 +52,14 @@ object SqlExecutor {
     }
     import scala.language.implicitConversions
 
-    implicit def eitherExtender[A, B](e: Either[Future[A], Future[B]]) = Magic(e)
+    implicit def eitherExtender[A, B](e: Either[Future[A], Future[B]]) = EitherExtender(e)
 
     val r = client.execute(clusterState())
       .flatMap(_
         .left.map(unwrapError("Unable to get index list"))
         .flatMap(_.result.metadata.toRight(err("Index list response doesn't have data")))
         .map(_.indices.keySet.toSeq
-          .map(delInd))
+          .map(doDeleteIndex))
         .left.map(Future.successful(_))
         .right.map(Future.sequence(_))
         .lift
@@ -70,28 +70,6 @@ object SqlExecutor {
         case Left(value) => println("ERROR:" + value)
         case Right(value) => println("Succesfully delete " + value._1 + " " + value._2)
       }
-
-
-    /*
-        client.execute(clusterState())
-          .map(_
-            .left.map(err("Unable to get index list"))
-            .flatMap(_.result.metadata.toRight("Index list response doesn't have data"))
-            .map(_.indices.keySet.toSeq
-                .map(delInd))
-            .map(y => Future.sequence(y))
-            .left.map(Future.successful(_).map(Left(_)))
-            .map(_.map(Right(_)))
-            .fold(identity, identity)
-          )
-          .flatten
-          .map(_.fold(x => Seq(Left(x)), identity))
-          .await
-          .foreach {
-            case Left(value) => println("ERROR:" + value)
-            case Right(value) => println("Succesfully delete " + value._1 + " " + value._2)
-          }
-    */
   }
 
   private def fillColumnMetadata(builder: AMetadataColumn.AMetadataColumnBuilder,
