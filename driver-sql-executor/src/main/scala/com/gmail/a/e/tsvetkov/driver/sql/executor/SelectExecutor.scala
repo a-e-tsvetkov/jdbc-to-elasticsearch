@@ -155,7 +155,12 @@ object SelectExecutor extends Executors {
   def execute(client: HttpClient, s: SqlSelectStatement): SelectResponse = {
     val databaseMetadata = MetadataProvider.getMetadata(client)
 
-    val scope = ScopeBuilder.buildScope(databaseMetadata, s.from)
+    val from = s.from match {
+      case t::Nil => t
+      case _ => err("Only select from single table supported")
+    }
+
+    val scope = ScopeBuilder.buildScope(databaseMetadata, from)
 
     val resolver = TypeResolver(scope)
 

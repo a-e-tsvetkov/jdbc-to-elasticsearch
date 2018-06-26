@@ -293,7 +293,7 @@ private object SqlParserInt extends Parsers with PackratParsers {
 
   lazy val tableReference = (tablePrimaryOrJoinedTable
     /*~ opt(sampleClause)*/)
-  lazy val tablePrimaryOrJoinedTable: Parser[TableReference] = tablePrimary | joinedTable
+  lazy val tablePrimaryOrJoinedTable: PackratParser[TableReference] = tablePrimary ||| joinedTable
   lazy val tablePrimary =
     tableOrQueryName ~ opt(opt(AS) ~> correlationName /*opt( "(" ~> derivedColumnList <~ ")")*/) ^^ { case n ~ a => TableReferencePrimary(n, a) } |
       //      derivedTable <~ opt(AS) ~ correlationName /*opt( "(" ~> derivedColumnList <~ ")")*/ |

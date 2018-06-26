@@ -48,6 +48,12 @@ public class TestBase {
             assertEquals(actualValue, value);
         };
     }
+    protected ValueAsserter b(boolean value) {
+        return (res, i) -> {
+            boolean actualValue = res.getBoolean(i + 1);
+            assertEquals(actualValue, value);
+        };
+    }
 
     public interface ValueAsserter {
         void assertValue(ResultSet res, int i) throws SQLException;

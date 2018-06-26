@@ -13,7 +13,7 @@ object SqlLexerInt extends Scanners {
 
   def digit = elem("digit", _.isDigit)
 
-  def chrExcept(cs: Char*) = elem("![" + cs.mkString("") + "]", ch => (cs forall (ch != _)))
+  def chrExcept(cs: Char*) = elem("![" + cs.mkString("") + "]", ch => !cs.contains(ch))
 
   def whitespaceChar = elem("space char", ch => ch <= ' ' && ch != EofCh)
 
@@ -26,7 +26,7 @@ object SqlLexerInt extends Scanners {
         val txt = b.map(a ++ "." ++ _._2).getOrElse(a)
         LITERAL_NUMERIC(txt.mkString(""))
     } |
-      '.' ~> rep(digit) ^^ {
+      '.' ~> rep1(digit) ^^ {
         case x =>
           val txt = '.' +: x
           LITERAL_NUMERIC(txt.mkString(""))
@@ -100,7 +100,7 @@ object SqlLexerInt extends Scanners {
     "where" -> WHERE
   )
 
-  val identifierOrKeyword = letter ~ rep(letter | digit) ^^ {
+  val identifierOrKeyword = letter ~ rep(letter | digit | '_') ^^ {
     case x ~ xs =>
       val ident = x :: xs mkString ""
       keyword.getOrElse(ident.toLowerCase, IDENTIFIER(ident))

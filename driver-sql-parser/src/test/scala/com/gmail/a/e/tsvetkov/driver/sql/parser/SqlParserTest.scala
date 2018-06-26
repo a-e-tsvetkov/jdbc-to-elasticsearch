@@ -115,6 +115,40 @@ class SqlParserTest extends FunSuite {
     )
   }
 
+  test("parse qualified identifier") {
+    val result = SqlParser.parse("select a.b from a")
+    val statement = assertResult[SqlSelectStatement](result)
+
+    assert(statement.terms ==
+      List(
+        SelectTermExpr(
+          ValueExpressionColumnReference(
+            SqlIdentifier(List("a", "b"))),
+          None))
+    )
+  }
+
+  test("parse join") {
+    val result = SqlParser.parse("select x from a left join b on a.key = b.key")
+    val statement = assertResult[SqlSelectStatement](result)
+
+    assert(statement.from ==
+      List(
+        TableReferenceJoin(
+          JoinTypeLeftOuter,
+          TableReferencePrimary("a",None),
+          TableReferencePrimary("b",None),
+          BooleanExpressionComparision(
+            ComparisionOperarionEq,
+            ValueExpressionColumnReference(
+              SqlIdentifier(List("a", "key"))),
+            ValueExpressionColumnReference(
+              SqlIdentifier(List("b", "key"))))
+        )
+      )
+    )
+  }
+
   private def assertResult[T: ClassTag](result: SqlParseResult) = {
     assert(result.isInstanceOf[SqlParseResultSuccess])
     val statement = result.asInstanceOf[SqlParseResultSuccess].statement

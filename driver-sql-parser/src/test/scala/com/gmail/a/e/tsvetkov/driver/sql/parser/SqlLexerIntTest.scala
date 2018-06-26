@@ -7,16 +7,31 @@ import scala.util.parsing.input.Reader
 
 class SqlLexerIntTest extends FunSuite {
 
-  test("parse identifier") {
+  test("parse tokens") {
     val tokens = SqlLexerInt.parse("INSERT into")
     assert(toSeq(tokens) ==
       Seq(INSERT, INTO))
   }
 
-  test("parse delimitedIdentifier") {
-    val tokens = SqlLexerInt.parse("\" a b \"")
+  test("parse identifier") {
+    val tokens = SqlLexerInt.parse("a a_b \" a b \" ")
     assert(toSeq(tokens) ==
-      Seq(IDENTIFIER(" a b "))
+      Seq(
+        IDENTIFIER("a"),
+        IDENTIFIER("a_b"),
+        IDENTIFIER(" a b ")
+      )
+    )
+  }
+
+  test("parse qualified identifier") {
+    val tokens = SqlLexerInt.parse("a.b")
+    assert(toSeq(tokens) ==
+      Seq(
+        IDENTIFIER("a"),
+        PERIOD,
+        IDENTIFIER("b")
+      )
     )
   }
 
