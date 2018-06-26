@@ -9,9 +9,6 @@
 
     <artifactId>driver-sql-executor</artifactId>
 
-    <properties>
-        <elastic4s.version>6.2.9</elastic4s.version>
-    </properties>
 
     <repositories>
 
@@ -33,17 +30,14 @@
         <dependency>
             <groupId>com.sksamuel.elastic4s</groupId>
             <artifactId>elastic4s-core_2.12</artifactId>
-            <version>${elastic4s.version}</version>
         </dependency>
         <dependency>
             <groupId>com.sksamuel.elastic4s</groupId>
             <artifactId>elastic4s-http_2.12</artifactId>
-            <version>${elastic4s.version}</version>
         </dependency>
         <dependency>
             <groupId>com.sksamuel.elastic4s</groupId>
             <artifactId>elastic4s-jackson_2.12</artifactId>
-            <version>${elastic4s.version}</version>
         </dependency>
 
         <dependency>

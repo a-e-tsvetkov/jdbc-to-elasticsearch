@@ -1,6 +1,7 @@
 package com.gmail.a.e.tsvetkov.driver.sql.executor
 
 import com.gmail.a.e.tsvetkov.driver.sql._
+import com.sksamuel.elastic4s.RefreshPolicy
 import com.sksamuel.elastic4s.http.ElasticDsl.{bulk, indexInto, _}
 import com.sksamuel.elastic4s.http.HttpClient
 
@@ -30,6 +31,7 @@ object InsertExecutor extends Executors {
 
   def execute(client: HttpClient, s: SqlInsertStatement) = {
     val req = bulk(s.sources.map(insertReq(s.tableName, s.columns.get)))
+      .refresh(RefreshPolicy.IMMEDIATE)
     check(client.execute(req).await)
   }
 }

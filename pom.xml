@@ -16,6 +16,8 @@
         <maven.compiler.target>10</maven.compiler.target>
 
         <scala.version>2.12.6</scala.version>
+
+        <elastic4s.version>6.2.9</elastic4s.version>
     </properties>
 
     <dependencyManagement>
@@ -24,6 +26,22 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>1.18.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sksamuel.elastic4s</groupId>
+                <artifactId>elastic4s-core_2.12</artifactId>
+                <version>${elastic4s.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sksamuel.elastic4s</groupId>
+                <artifactId>elastic4s-http_2.12</artifactId>
+                <version>${elastic4s.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sksamuel.elastic4s</groupId>
+                <artifactId>elastic4s-jackson_2.12</artifactId>
+                <version>${elastic4s.version}</version>
             </dependency>
 
             <dependency>
@@ -44,6 +62,11 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>1.2.3</version>
+            </dependency>
+            <dependency>
                 <groupId>org.testng</groupId>
                 <artifactId>testng</artifactId>
                 <version>6.14.3</version>
@@ -52,30 +75,31 @@
 
         </dependencies>
     </dependencyManagement>
-<build>
-    <pluginManagement>
-        <plugins>
-            <plugin>
-                <groupId>org.scala-tools</groupId>
-                <artifactId>maven-scala-plugin</artifactId>
-                <version>2.15.2</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <args>-Xfatal-warnings</args>
-                    <scalaVersion>${scala.version}</scalaVersion>
-                </configuration>
-            </plugin>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.scala-tools</groupId>
+                    <artifactId>maven-scala-plugin</artifactId>
+                    <version>2.15.2</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>compile</goal>
+                                <goal>testCompile</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <args>-Xfatal-warnings</args>
+                        <!--<args>-feature</args>-->
+                        <scalaVersion>${scala.version}</scalaVersion>
+                    </configuration>
+                </plugin>
 
-        </plugins>
-    </pluginManagement>
-</build>
+            </plugins>
+        </pluginManagement>
+    </build>
 
     <modules>
         <module>driver</module>
@@ -85,6 +109,7 @@
         <module>driver-sql</module>
         <module>driver-sql-executor</module>
         <module>driver-resultset</module>
+        <module>integration-test</module>
     </modules>
 
 </project>
