@@ -7,7 +7,24 @@ JDBC driver for elasticsearch
 
 Create JDBC driver that use elasticsearch as storage.
 
-### Current goal
+### Current state
+#### Statements supported
+* CREATE TABLE
+* SELECT
+* INSERT
+#### Current limitations
+* Only int supported as column type
+* No joins
+* No subselect (Not even in plans)
+* No functions
+* SORT BY not supported (second goal)
+* HAVING not supported (Not even in plan)
+* Very limited metadata support
+
+#### Curent goal
+Support inner join
+
+### Major goal
 
 Make it work with Hibernate.
 
