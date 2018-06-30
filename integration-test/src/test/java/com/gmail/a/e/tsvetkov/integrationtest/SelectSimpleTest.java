@@ -6,6 +6,8 @@ import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import java.sql.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SelectSimpleTest extends TestBase {
     private Connection connection;
@@ -70,6 +72,28 @@ public class SelectSimpleTest extends TestBase {
     }
 
     @Test
+    @Ignore
+    public void orderBy() throws SQLException {
+        createSimpleTable();
+
+        insertSimpleTable(
+                row(i(1), i(1)),
+                row(i(1), i(2)),
+                row(i(2), i(1)),
+                row(i(2), i(2))
+        );
+
+        ResultSet res = executeQuery(
+                "select field1, field2 from table1 order by field1 desc, field2 asc");
+        assertResult(res,
+                row(i(2), i(1)),
+                row(i(2), i(2)),
+                row(i(1), i(1)),
+                row(i(1), i(2))
+        );
+    }
+
+    @Test
     public void selectClauseExpression() throws SQLException {
         createSimpleTable();
         execute("insert into table1 (field1, field2) values (1, 2)");
@@ -90,8 +114,21 @@ public class SelectSimpleTest extends TestBase {
         return statement.executeQuery(sql);
     }
 
+    /**
+     * create table table1(field1 int, field2 int)
+     */
     private void createSimpleTable() throws SQLException {
         execute("create table table1(field1 int, field2 int)");
+    }
+
+    private void insertSimpleTable(Row... rows) throws SQLException {
+        String values = Stream.of(rows)
+                .map(x -> x.getColumns()
+                        .map(Cell::toSqlLiteral)
+                        .collect(Collectors.joining(","))
+                ).map(x -> "(" + x + ")")
+                .collect(Collectors.joining(","));
+        execute("insert into table1 (field1, field2) values " + values);
     }
 
 }

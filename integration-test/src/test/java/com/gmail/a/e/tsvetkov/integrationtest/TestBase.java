@@ -2,10 +2,12 @@ package com.gmail.a.e.tsvetkov.integrationtest;
 
 import com.gmail.a.e.tsvetkov.driver.sql.executor.SqlExecutor;
 import com.sksamuel.elastic4s.http.HttpClient;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.stream.Stream;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -29,46 +31,80 @@ public class TestBase {
         connect.close();
     }
 
-    protected void assertResult(ResultSet res, RowAsserter... rows) throws SQLException {
-        for (RowAsserter row : rows) {
+    protected void assertResult(ResultSet res, Row... rows) throws SQLException {
+        for (int i = 0; i < rows.length; i++) {
+            Row row = rows[i];
             var r = res.next();
-            assertTrue(r);
-            row.assertRow(res);
+            try {
+                assertTrue(r);
+                row.assertRow(res);
+            } catch (AssertionError a) {
+                throw new AssertionError("Missmatch on row " + i + ": " + a.getMessage(), a);
+            }
         }
         assertFalse(res.next());
     }
 
-    protected RowAsserter row(ValueAsserter... columns) {
-        return new RowAsserter(columns);
+    protected Row row(Cell... columns) {
+        return new Row(columns);
     }
 
-    protected ValueAsserter i(int value) {
-        return (res, i) -> {
-            int actualValue = res.getInt(i + 1);
-            assertEquals(actualValue, value);
-        };
-    }
-    protected ValueAsserter b(boolean value) {
-        return (res, i) -> {
-            boolean actualValue = res.getBoolean(i + 1);
-            assertEquals(actualValue, value);
+    protected Cell i(int value) {
+        return new Cell() {
+            @Override
+            public void assertValue(ResultSet res, int i) throws SQLException {
+                int actualValue = res.getInt(i + 1);
+                assertEquals(actualValue, value);
+            }
+
+            @Override
+            public String toSqlLiteral() {
+                return String.valueOf(value);
+            }
         };
     }
 
-    public interface ValueAsserter {
+    protected Cell b(boolean value) {
+        return new Cell() {
+            @Override
+            public void assertValue(ResultSet res, int i) throws SQLException {
+                boolean actualValue = res.getBoolean(i + 1);
+                assertEquals(actualValue, value);
+            }
+
+            @Override
+            public String toSqlLiteral() {
+                return String.valueOf(value);
+            }
+
+        };
+    }
+
+    public interface Cell {
         void assertValue(ResultSet res, int i) throws SQLException;
+
+        String toSqlLiteral();
     }
 
-    public class RowAsserter {
-        private final ValueAsserter[] columns;
+    public class Row {
+        private final Cell[] columns;
 
-        public RowAsserter(ValueAsserter[] columns) {
+        public Row(Cell[] columns) {
             this.columns = columns;
+        }
+
+        public Stream<Cell> getColumns() {
+            return Stream.of(columns);
         }
 
         public void assertRow(ResultSet res) throws SQLException {
             for (int i = 0; i < columns.length; i++) {
-                columns[i].assertValue(res, i);
+                try {
+                    columns[i].assertValue(res, i);
+                } catch (AssertionError a) {
+                    throw new AssertionError("Missmatch on column " + i + ": " + a.getMessage(), a);
+                }
+
             }
         }
     }
