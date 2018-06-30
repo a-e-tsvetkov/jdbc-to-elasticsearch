@@ -4,7 +4,13 @@ sealed trait SqlStatement
 
 case class SqlCreateTableStatement(name: String, columnDefenition: Seq[ColumnDefenition]) extends SqlStatement
 
-case class SqlSelectStatement(terms: Seq[SelectTerm], from: Seq[TableReference], where : Option[ValueExpression]) extends SqlStatement
+case class SqlSelectStatement
+(
+  terms: Seq[SelectTerm],
+  from: Seq[TableReference],
+  where: Option[ValueExpression],
+  sorting: Seq[SortSpec] = Seq()
+) extends SqlStatement
 
 case class SqlInsertStatement
 (
@@ -129,3 +135,11 @@ sealed trait ValueExpression
 case class ValueExpressionColumnReference(id: SqlIdentifier) extends ValueExpression
 
 case class SqlIdentifier(terms: Seq[String])
+
+sealed trait Ordering
+
+case object OrderingAsc extends Ordering
+
+case object OrderingDesc extends Ordering
+
+case class SortSpec(sortKey: ValueExpression, ordering: Ordering)

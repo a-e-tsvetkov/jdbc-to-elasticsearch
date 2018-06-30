@@ -191,8 +191,8 @@ private object SqlParserInt extends Parsers with PackratParsers {
     concatenation | characterFactor
   lazy val concatenation =
     characterValueExpression ~ OP_CONCAT ~ characterFactor ^^ {
-    case l ~ _ ~ r => StringExpressionBinary(StringOperarionConcat, l, r)
-  }
+      case l ~ _ ~ r => StringExpressionBinary(StringOperarionConcat, l, r)
+    }
   lazy val characterFactor = characterPrimary <~ opt(collateClause)
   lazy val characterPrimary = valueExpressionPrimary | stringValueFunction
   lazy val blobValueExpression: Parser[ValueExpression] =
@@ -349,6 +349,27 @@ private object SqlParserInt extends Parsers with PackratParsers {
   lazy val derivedColumn = valueExpression ~ opt(asClause) ^^ { case v ~ n => SelectTermExpr(v, n) }
   lazy val asClause = opt(AS) ~> columnName
 
+  //7.13
+  lazy val queryExpression =
+  //[ <with clause> ]
+    queryExpressionBody
+
+  lazy val queryExpressionBody = nonJoinQueryExpression //| joinedTable
+  lazy val nonJoinQueryExpression =
+    nonJoinQueryTerm
+  //      |     <query expression body> UNION [ ALL | DISTINCT ] [ <corresponding spec> ] <query term>
+  //    |     <query expression body> EXCEPT [ ALL | DISTINCT ] [ <corresponding spec> ] <query term>
+  lazy val nonJoinQueryTerm =
+  nonJoinQueryPrimary
+  //      |     <query term> INTERSECT [ ALL | DISTINCT ] [ <corresponding spec> ] <query primary>
+  lazy val nonJoinQueryPrimary = simpleTable
+  //| <left paren> <non-join query expression> <right paren>
+
+  lazy val simpleTable =
+    querySpecification
+  //      |     <table value constructor>
+  //      |     <explicit table>
+
   //8.1
   lazy val predicate: Parser[BooleanExpression] =
     comparisonPredicate |
@@ -391,11 +412,19 @@ private object SqlParserInt extends Parsers with PackratParsers {
   //  |     <user-defined character set name>
 
   //10.7
-  val collateClause = COLLATE ~> collationName
+  lazy val collateClause = COLLATE ~> collationName
 
+  //10.10
+  lazy val sortSpecificationList = rep1sep(sortSpecification, COMMA)
+  lazy val sortSpecification = sortKey ~ opt(orderingSpecification) ^^ { case k ~ s => SortSpec(k, s.getOrElse(OrderingAsc)) }
+  // ~ opt( <null ordering> )
+  lazy val sortKey = valueExpression
+  lazy val orderingSpecification =
+    ASC ^^^ OrderingAsc |
+      DESC ^^^ OrderingDesc
 
   // 11.3
-  val tableDefinition =
+  lazy val tableDefinition =
     (CREATE /* [ tableScope ] */ ~>
       TABLE ~>
       tableName ~
@@ -422,6 +451,35 @@ private object SqlParserInt extends Parsers with PackratParsers {
   // [   <column constraint definition>... ]
   // [   <collate clause>]
 
+  //13.5
+  lazy val sqlSchemaStatement =
+    sqlSchemaDefinitionStatement
+  //  |     <SQL schema manipulation statement>
+
+  lazy val sqlSchemaDefinitionStatement =
+  //    <schema definition>
+    tableDefinition
+  // |     <view definition>
+  // |     <SQL-invoked routine>
+  // |     <grant statement>
+  // |     <role definition>
+  // |     <domain definition>
+  // |     <character set definition>
+  // |     <collation definition>
+  // |     <transliteration definition>
+  // |     <assertion definition>
+  // |     <trigger definition>
+  // |     <user-defined type definition>
+  // |     <user-defined cast definition>
+  // |     <user-defined ordering definition>
+  // |     <transform definition>
+  // |     <sequence generator definition>
+
+  //14.1
+  lazy val cursorSpecification = queryExpression ~ opt(orderByClause) ^^ { case e ~ o => e.copy(sorting = o.toSeq.flatten) }
+  // [ <updatability clause> ]
+  lazy val orderByClause = ORDER ~> BY ~> sortSpecificationList
+
   //14.8
   lazy val insertStatement =
     INSERT ~> INTO ~> insertionTarget ~ insertColumnsAndSource ^^ {
@@ -444,10 +502,32 @@ private object SqlParserInt extends Parsers with PackratParsers {
     }
   lazy val insertColumnList = columnNameList
 
+  //19.6
+
+  lazy val sqlExecutableStatement =
+    preparableSqlDataStatement |
+      preparableSqlSchemaStatement
+  //  |     <preparable SQL transaction statement>
+  //  |     <preparable SQL control statement>
+  //  |     <preparable SQL session statement>
+  //  |     <preparable implementation-defined statement>
+
+  lazy val preparableSqlSchemaStatement = sqlSchemaStatement
+
+  lazy val preparableSqlDataStatement =
+  //    <delete statement: searched>
+  //      |     <dynamic single row select statement>
+    insertStatement |
+      dynamicSelectStatement
+  //    |     <update statement: searched>
+  //    |     <merge statement>
+  //    |     <preparable dynamic delete statement: positioned>
+  //    |     <preparable dynamic update statement: positioned>
+
+  lazy val dynamicSelectStatement = cursorSpecification
+
   val statement: Parser[SqlStatement] =
-    tableDefinition |
-      querySpecification |
-      insertStatement |
+    sqlExecutableStatement |
       err("unknown statement")
 
   val goal: Parser[SqlStatement] = phrase(statement)

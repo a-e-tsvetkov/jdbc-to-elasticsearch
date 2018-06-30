@@ -27,9 +27,8 @@ object SqlLexerInt extends Scanners {
         LITERAL_NUMERIC(txt.mkString(""))
     } |
       '.' ~> rep1(digit) ^^ {
-        case x =>
-          val txt = '.' +: x
-          LITERAL_NUMERIC(txt.mkString(""))
+        x =>
+          LITERAL_NUMERIC(('.' +: x).mkString(""))
       }
 
 
@@ -97,7 +96,11 @@ object SqlLexerInt extends Scanners {
     "insert" -> INSERT,
     "into" -> INTO,
     "values" -> VALUES,
-    "where" -> WHERE
+    "where" -> WHERE,
+    "order" -> ORDER,
+    "by" -> BY,
+    "asc" -> ASC,
+    "desc" -> DESC
   )
 
   val identifierOrKeyword = letter ~ rep(letter | digit | '_') ^^ {

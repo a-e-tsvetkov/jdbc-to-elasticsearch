@@ -149,6 +149,24 @@ class SqlParserTest extends FunSuite {
     )
   }
 
+  test("order by") {
+    val result = SqlParser.parse("select x from t order by v1, v2 desc, v3 asc")
+    val statement = assertResult[SqlSelectStatement](result)
+
+    assert(statement.sorting ==
+      List(
+        SortSpec(
+          ValueExpressionColumnReference(SqlIdentifier(List("v1"))),
+          OrderingAsc),
+        SortSpec(
+          ValueExpressionColumnReference(SqlIdentifier(List("v2"))),
+          OrderingDesc),
+        SortSpec(
+          ValueExpressionColumnReference(SqlIdentifier(List("v3"))),
+          OrderingAsc))
+    )
+  }
+
   private def assertResult[T: ClassTag](result: SqlParseResult) = {
     assert(result.isInstanceOf[SqlParseResultSuccess])
     val statement = result.asInstanceOf[SqlParseResultSuccess].statement

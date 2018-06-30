@@ -121,4 +121,12 @@ object SqlToken {
 
   case object WHERE extends SqlToken
 
+  case object ORDER extends SqlToken
+
+  case object BY extends SqlToken
+
+  case object ASC extends SqlToken
+
+  case object DESC extends SqlToken
+
 }
