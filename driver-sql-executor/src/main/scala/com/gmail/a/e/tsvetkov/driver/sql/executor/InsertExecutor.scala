@@ -9,13 +9,13 @@ object InsertExecutor extends Executors {
 
   object ValueExtractor extends ValueExtractor
 
-  object TypeResolver extends TypeResolver(Scope(Seq()))
+  object TypeResolver extends TypeResolver(Scope())
 
   object JsonSerializer extends JsonValueSerializer
 
   def createDoc(columns: Seq[String], values: Seq[ResolvedValueExpression]) = {
     columns.zip(values).map {
-      case (c, v) => (c, JsonSerializer.toJsonValue(ValueExtractor.extract(Map())(v)))
+      case (c, v) => (c, JsonSerializer.toJsonValue(ValueExtractor.evaluateExpression(Map())(v)))
     }
   }
 

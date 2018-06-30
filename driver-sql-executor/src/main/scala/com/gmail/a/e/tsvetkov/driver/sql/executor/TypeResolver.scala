@@ -4,6 +4,9 @@ import com.gmail.a.e.tsvetkov.driver.sql._
 import com.gmail.a.e.tsvetkov.driver.sql.executor.Util.err
 
 case class TypeResolver(scope: Scope) {
+  def resolveTable(tableName: String) = {
+    scope.find(tableName)
+  }
 
   def resolve(expression: ValueExpression): ResolvedValueExpression = {
     expression match {
@@ -17,18 +20,12 @@ case class TypeResolver(scope: Scope) {
   private def resolveReferenceExpression(id: SqlIdentifier) = {
     id.terms match {
       case Seq(tableName, columnName) =>
-        val t = scope.tables
-          .find(t => t.alias == tableName)
-          .getOrElse(err("table not found"))
-        val c = t.columns.find(c => c.name == columnName)
-          .getOrElse(err("column not found"))
-        ResolvedValueExpressionColumnRef(t, c)
+        val t = scope.find(tableName)
+        val c = t.find(columnName)
+        ResolvedValueExpressionColumnRef(c)
       case Seq(columnName) =>
-        val (t, c) = scope.tables
-          .flatMap(t => t.columns.map((t, _)))
-          .find { case (_, column) => column.name == columnName }
-          .getOrElse(err("column not found"))
-        ResolvedValueExpressionColumnRef(t, c)
+        val c = scope.findColumn(columnName)
+        ResolvedValueExpressionColumnRef(c)
       case _ => err("invalid reference " + id)
     }
   }

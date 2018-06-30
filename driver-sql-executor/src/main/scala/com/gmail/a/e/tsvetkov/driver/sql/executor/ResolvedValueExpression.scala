@@ -14,7 +14,6 @@ case class ResolvedValueExpressionConst
 
 case class ResolvedValueExpressionColumnRef
 (
-  table: ScopeTable,
   column: ScopeColumn
 ) extends ResolvedValueExpression {
   override val valueType: ValueType = column.valueType

@@ -30,7 +30,7 @@ case class TableReferenceJoin
 (joinType: JoinType,
  ref: TableReference,
  tableReference: TableReferencePrimary,
- clause: AnyRef
+ clause: ValueExpression
 ) extends TableReference
 
 

@@ -54,7 +54,6 @@ public class SelectSimpleTest extends TestBase {
     }
 
     @Test
-    @Ignore
     public void join() throws SQLException {
         execute("create table table1(key int, value1 int)");
         execute("create table table2(key int, table1_key int, value2 int)");

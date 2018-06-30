@@ -2,7 +2,7 @@ package com.gmail.a.e.tsvetkov.driver.sql.executor
 
 trait ValueExtractor {
 
-private  def extractValue(fields: Map[String, AnyRef], column: ScopeColumn): Value = {
+  def extractValue(fields: Map[String, AnyRef], column: ScopeColumn): Value = {
     column.valueType match {
       case MetadataTypeChar =>
         StringValue(fields(column.name).asInstanceOf[String])
@@ -14,16 +14,16 @@ private  def extractValue(fields: Map[String, AnyRef], column: ScopeColumn): Val
     }
   }
 
-  def extract(fields: Map[String, AnyRef])(expr: ResolvedValueExpression): Value =
+  def evaluateExpression(fields: Map[ScopeColumn, Value])(expr: ResolvedValueExpression): Value =
     expr match {
       case ResolvedValueExpressionConst(valueType, value) => value
-      case ResolvedValueExpressionColumnRef(table, column) => extractValue(fields, column)
+      case ResolvedValueExpressionColumnRef(column) => fields(column)
       case ResolvedValueExpression1(_, op, sub) =>
-        val subVal = extract(fields)(sub)
+        val subVal = evaluateExpression(fields)(sub)
         op.compute(subVal)
       case ResolvedValueExpression2(valueType, op, left, right) =>
-        val leftVal = extract(fields)(left)
-        val rightVal = extract(fields)(right)
+        val leftVal = evaluateExpression(fields)(left)
+        val rightVal = evaluateExpression(fields)(right)
         op.compute(leftVal, rightVal)
     }
 
