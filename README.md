@@ -14,7 +14,7 @@ Create JDBC driver that use elasticsearch as storage.
 * INSERT
 #### Current limitations
 * Only int supported as column type
-* No joins
+* Rudimentary `join` support
 * No subselect (Not even in plans)
 * No functions
 * SORT BY not supported (second goal)
